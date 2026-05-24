@@ -1,0 +1,994 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Регистрация | Учет огнетушителей</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell" aria-labelledby="page-title">
+      <section class="phone-frame">
+        <header class="app-header" id="authHeader">
+          <div class="brand-mark auth-logo" aria-label="Учет огнетушителей">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 3h8v4l-2 2v2h3a2 2 0 0 1 2 2v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7a2 2 0 0 1 2-2h3V9L8 7V3Z" />
+              <path d="M9 15h6" />
+              <path d="M9 18h6" />
+            </svg>
+          </div>
+          <h1 id="page-title">Регистрация</h1>
+          <p class="subtitle">Создайте профиль для работы с проверками и обслуживанием.</p>
+        </header>
+
+        <div class="stepper" id="authStepper" aria-label="Прогресс регистрации">
+          <span class="step-dot is-active" data-step-dot="1"></span>
+          <span class="step-dot" data-step-dot="2"></span>
+          <span class="step-dot" data-step-dot="3"></span>
+        </div>
+
+        <form class="registration-form" id="registrationForm">
+          <section class="form-step is-active" data-step="1" aria-labelledby="step-1-title">
+            <div class="step-heading">
+              <span class="step-count">Шаг 1 из 3</span>
+              <h2 id="step-1-title">Выберите роль</h2>
+            </div>
+
+            <div class="role-grid" role="radiogroup" aria-label="Тип аккаунта">
+              <label class="role-card">
+                <input type="radio" name="accountType" value="organization" checked />
+                <span class="role-title">Организация</span>
+                <span class="role-text">Для компаний, которые ведут учет своих огнетушителей.</span>
+              </label>
+
+              <label class="role-card">
+                <input type="radio" name="accountType" value="contractor" />
+                <span class="role-title">Подрядчик</span>
+                <span class="role-text">Для исполнителей, которые проводят проверки и обслуживание.</span>
+              </label>
+            </div>
+
+            <button type="button" class="primary-button" data-next>Продолжить</button>
+            <button type="button" class="secondary-button login-entry-button" id="loginEntryButton">Уже есть аккаунт? Войти</button>
+          </section>
+
+          <section class="form-step" data-step="2" aria-labelledby="step-2-title">
+            <div class="step-heading">
+              <span class="step-count">Шаг 2 из 3</span>
+              <h2 id="step-2-title">Данные компании</h2>
+              <p class="helper" id="stepTwoHelper">Заполните данные для создания аккаунта.</p>
+            </div>
+
+            <div class="field">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="name@company.ru" />
+            </div>
+
+            <div class="field organization-only">
+              <label for="company">Название компании</label>
+              <input id="company" name="company" type="text" autocomplete="organization" placeholder="ООО «Пожарный контроль»" />
+            </div>
+
+            <div class="field registration-only">
+              <label for="fullName">ФИО</label>
+              <input id="fullName" name="fullName" type="text" autocomplete="name" placeholder="Иванов Иван Иванович" />
+            </div>
+
+            <div class="button-row">
+              <button type="button" class="secondary-button" data-prev>Назад</button>
+              <button type="button" class="primary-button" data-next id="emailStepButton">Получить код</button>
+            </div>
+          </section>
+
+          <section class="form-step" data-step="3" aria-labelledby="step-3-title">
+            <div class="step-heading">
+              <span class="step-count">Шаг 3 из 3</span>
+              <h2 id="step-3-title">Код из письма</h2>
+              <p class="helper">Мы отправили шестизначный код на указанный email.</p>
+            </div>
+
+            <div class="code-grid" aria-label="Проверочный код">
+              <input class="code-input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Цифра 1" />
+              <input class="code-input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Цифра 2" />
+              <input class="code-input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Цифра 3" />
+              <input class="code-input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Цифра 4" />
+              <input class="code-input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Цифра 5" />
+              <input class="code-input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Цифра 6" />
+            </div>
+            <p class="field-error" id="codeError">Введите все 6 цифр из письма.</p>
+
+            <button type="button" class="text-button">Отправить код повторно</button>
+
+            <div class="button-row">
+              <button type="button" class="secondary-button" data-prev>Назад</button>
+              <button type="submit" class="primary-button">Завершить</button>
+            </div>
+          </section>
+
+          <section class="success-state" id="successState" aria-live="polite">
+            <div class="success-mark" aria-hidden="true"></div>
+            <h2 id="successTitle">Заявка создана</h2>
+            <p id="successText">После проверки почты вы сможете войти в личный кабинет.</p>
+            <button type="button" class="primary-button" id="restartButton">На главный экран</button>
+          </section>
+        </form>
+
+        <section class="dashboard-screen" id="dashboardScreen" aria-labelledby="dashboardTitle">
+          <header class="dashboard-topbar">
+            <div class="brand-mark" data-organization-logo aria-label="Учет огнетушителей">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 3h8v4l-2 2v2h3a2 2 0 0 1 2 2v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7a2 2 0 0 1 2-2h3V9L8 7V3Z" />
+                <path d="M9 15h6" />
+                <path d="M9 18h6" />
+              </svg>
+            </div>
+            <p class="flow-step-label" data-dashboard-title-label>Дашборд</p>
+
+            <div class="menu-wrap">
+              <button type="button" class="icon-button" id="menuButton" aria-label="Открыть меню" aria-expanded="false">
+                <span></span>
+                <span></span>
+                <span></span>
+              </button>
+            </div>
+          </header>
+
+          <div class="dashboard-content" data-organization-dashboard>
+            <section class="summary-section" aria-labelledby="dashboardTitle">
+              <h2 id="dashboardTitle">Сводка по всем объектам</h2>
+              <div class="metric-grid">
+                <article class="metric-card">
+                  <div class="metric-label-row">
+                    <p>Огнетушители</p>
+                    <span aria-hidden="true">›</span>
+                  </div>
+                  <strong>0</strong>
+                </article>
+                <article class="metric-card">
+                  <div class="metric-label-row">
+                    <p>В норме</p>
+                    <span aria-hidden="true">›</span>
+                  </div>
+                  <strong>0</strong>
+                </article>
+                <article class="metric-card">
+                  <div class="metric-label-row">
+                    <p>Требуют проверки</p>
+                    <span aria-hidden="true">›</span>
+                  </div>
+                  <strong>0</strong>
+                </article>
+                <article class="metric-card">
+                  <div class="metric-label-row">
+                    <p>Неисправные</p>
+                    <span aria-hidden="true">›</span>
+                  </div>
+                  <strong>0</strong>
+                </article>
+              </div>
+            </section>
+
+            <section class="checks-section" aria-labelledby="checksTitle">
+              <div class="section-title-row">
+                <h2 id="checksTitle">Последние проверки</h2>
+                <span aria-hidden="true">›</span>
+              </div>
+              <div class="checks-empty">
+                <p>Проверок пока нет</p>
+              </div>
+            </section>
+          </div>
+
+          <div class="dashboard-content is-hidden" data-contractor-dashboard>
+            <section class="summary-section" aria-labelledby="contractorDashboardTitle">
+              <h2 id="contractorDashboardTitle">Сводка по всем объектам</h2>
+              <div class="metric-grid">
+                <button type="button" class="metric-card" data-contractor-dashboard-target="objects">
+                  <div class="metric-label-row">
+                    <p>Мои объекты</p>
+                    <span aria-hidden="true">›</span>
+                  </div>
+                  <strong>2</strong>
+                </button>
+                <button type="button" class="metric-card" data-contractor-dashboard-target="check">
+                  <div class="metric-label-row">
+                    <p>Проверить</p>
+                    <span aria-hidden="true">›</span>
+                  </div>
+                  <strong>1</strong>
+                </button>
+                <button type="button" class="metric-card" data-contractor-dashboard-target="issues">
+                  <div class="metric-label-row">
+                    <p>Неисправности</p>
+                    <span aria-hidden="true">›</span>
+                  </div>
+                  <strong>5</strong>
+                </button>
+                <button type="button" class="metric-card is-selected" data-contractor-dashboard-target="replacements">
+                  <div class="metric-label-row">
+                    <p>Замены</p>
+                    <span aria-hidden="true">›</span>
+                  </div>
+                  <strong>7</strong>
+                </button>
+              </div>
+            </section>
+          </div>
+
+          <button type="button" class="primary-button add-project-button" id="addObjectButton" data-organization-dashboard-action>Добавить объект</button>
+          <button type="button" class="primary-button add-project-button is-hidden" id="startInspectionButton" data-contractor-dashboard-action>Начать проверку</button>
+        </section>
+
+        <section class="menu-screen" id="menuScreen" aria-labelledby="menuTitle">
+          <header class="menu-topbar">
+            <div class="brand-mark" aria-label="Учет огнетушителей">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 3h8v4l-2 2v2h3a2 2 0 0 1 2 2v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7a2 2 0 0 1 2-2h3V9L8 7V3Z" />
+                <path d="M9 15h6" />
+                <path d="M9 18h6" />
+              </svg>
+            </div>
+            <h2 class="menu-title" id="menuTitle">Меню</h2>
+            <button type="button" class="icon-button" id="closeMenuButton" aria-label="Закрыть меню">
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+          </header>
+
+          <nav class="menu-list" aria-label="Меню кабинета">
+            <button type="button" data-menu-dashboard>Дашборд</button>
+            <button type="button" data-menu-objects>Ваши объекты</button>
+            <button type="button" data-menu-account>Аккаунт</button>
+          </nav>
+
+          <button type="button" class="menu-logout" id="logoutButton">Выйти</button>
+        </section>
+
+        <section class="account-screen" id="accountScreen" aria-labelledby="accountTitle">
+          <header class="flow-topbar">
+            <div class="brand-mark" aria-label="Учет огнетушителей">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 3h8v4l-2 2v2h3a2 2 0 0 1 2 2v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7a2 2 0 0 1 2-2h3V9L8 7V3Z" />
+                <path d="M9 15h6" />
+                <path d="M9 18h6" />
+              </svg>
+            </div>
+            <p class="flow-step-label" id="accountTitle">Аккаунт</p>
+            <button type="button" class="flow-icon-button" id="accountMenuButton" aria-label="Открыть меню">
+              <img src="./assets/icon-menu.svg" alt="" />
+            </button>
+          </header>
+
+          <div class="account-content">
+            <section class="account-section">
+              <h2>Информация о компании</h2>
+              <div class="account-info-card">
+                <p>ООО «Пожарный контроль»</p>
+                <span>director@company.ru</span>
+              </div>
+            </section>
+
+            <section class="account-section">
+              <h2 data-account-link-title>Подрядчик - подвязка подрядчика</h2>
+              <div class="client-list is-hidden" id="clientList"></div>
+              <div class="client-form is-hidden" id="clientForm">
+                <input type="text" id="clientName" placeholder="Название клиента" aria-label="Название клиента" />
+                <div class="document-group" data-client-document-group>
+                  <div class="document-grid"></div>
+                  <button type="button" class="upload-button" data-client-upload-label="Договор">Загрузить договор</button>
+                </div>
+                <div class="document-group" data-client-document-group>
+                  <div class="document-grid"></div>
+                  <button type="button" class="upload-button" data-client-upload-label="ТЗ">Загрузить ТЗ</button>
+                </div>
+                <div class="document-group" data-client-document-group>
+                  <div class="document-grid"></div>
+                  <button type="button" class="upload-button" data-client-upload-label="План размещения средств ПБ">Загрузить план размещения средств ПБ</button>
+                </div>
+                <div class="employee-actions">
+                  <button type="button" class="secondary-button" id="cancelClientButton">Отмена</button>
+                  <button type="button" class="primary-button" id="saveClientButton">Добавить</button>
+                </div>
+              </div>
+              <button type="button" class="secondary-button" data-account-link-button>Пригласить подрядчика</button>
+            </section>
+
+            <section class="account-section">
+              <h2>Сотрудники</h2>
+              <div class="employee-list" id="employeeList"></div>
+              <div class="employee-form is-hidden" id="employeeForm">
+                <input type="text" id="employeeName" placeholder="ФИО сотрудника" aria-label="ФИО сотрудника" />
+                <input type="email" id="employeeEmail" placeholder="Email сотрудника" aria-label="Email сотрудника" />
+                <div class="employee-actions">
+                  <button type="button" class="secondary-button" id="cancelEmployeeButton">Отмена</button>
+                  <button type="button" class="primary-button" id="saveEmployeeButton">Добавить</button>
+                </div>
+              </div>
+              <button type="button" class="secondary-button" id="showEmployeeFormButton">Добавить сотрудника</button>
+            </section>
+
+            <section class="account-section" data-account-documents-section>
+              <h2>Загруженные документы</h2>
+              <div class="account-documents">
+                <div class="document-item">
+                  <span class="document-icon">PDF</span>
+                  <span class="document-name">Договор.pdf</span>
+                  <button type="button" class="document-action" data-account-replace-document>Заменить</button>
+                  <button type="button" class="document-action is-danger" data-account-remove-document>Удалить</button>
+                </div>
+                <div class="document-item">
+                  <span class="document-icon">PDF</span>
+                  <span class="document-name">ТЗ.pdf</span>
+                  <button type="button" class="document-action" data-account-replace-document>Заменить</button>
+                  <button type="button" class="document-action is-danger" data-account-remove-document>Удалить</button>
+                </div>
+                <div class="document-item">
+                  <span class="document-icon">PDF</span>
+                  <span class="document-name">План размещения средств ПБ.pdf</span>
+                  <button type="button" class="document-action" data-account-replace-document>Заменить</button>
+                  <button type="button" class="document-action is-danger" data-account-remove-document>Удалить</button>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="objects-screen" id="objectsScreen" aria-labelledby="objectsTitle">
+          <header class="flow-topbar">
+            <div class="brand-mark" aria-label="Учет огнетушителей">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 3h8v4l-2 2v2h3a2 2 0 0 1 2 2v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7a2 2 0 0 1 2-2h3V9L8 7V3Z" />
+                <path d="M9 15h6" />
+                <path d="M9 18h6" />
+              </svg>
+            </div>
+            <p class="flow-step-label" id="objectsTitle">Ваши объекты</p>
+            <button type="button" class="flow-icon-button" id="objectsMenuButton" aria-label="Открыть меню">
+              <img src="./assets/icon-menu.svg" alt="" />
+            </button>
+          </header>
+
+          <div class="objects-list" data-organization-objects>
+            <article class="object-card">
+              <h2>Название объекта</h2>
+              <div class="metric-grid">
+                <div class="metric-card object-metric">
+                  <div class="metric-label-row">
+                    <p>Огнетушители</p>
+                    <span aria-hidden="true">›</span>
+                  </div>
+                  <strong>17</strong>
+                </div>
+                <div class="metric-card object-metric">
+                  <div class="metric-label-row">
+                    <p>В норме</p>
+                    <span aria-hidden="true">›</span>
+                  </div>
+                  <strong>12</strong>
+                </div>
+                <div class="metric-card object-metric">
+                  <div class="metric-label-row">
+                    <p>Требуют проверки</p>
+                    <span aria-hidden="true">›</span>
+                  </div>
+                  <strong>3</strong>
+                </div>
+                <div class="metric-card object-metric is-selected">
+                  <div class="metric-label-row">
+                    <p>Неисправные</p>
+                    <span aria-hidden="true">›</span>
+                  </div>
+                  <strong>2</strong>
+                </div>
+              </div>
+              <button type="button" class="summary-button">
+                <span>Смотреть общую сводку</span>
+                <span aria-hidden="true">›</span>
+              </button>
+              <section class="object-detail-section">
+                <div class="small-title-row">
+                  <h3>Проблемы на объекте</h3>
+                  <span aria-hidden="true">›</span>
+                </div>
+                <ul>
+                  <li>Отсутствует огнетушитель в Здании 1 в секции 2</li>
+                  <li>Отсутствует огнетушитель в Здании 1 в секции 2</li>
+                  <li>Отсутствует огнетушитель в Здании 1 в секции 2</li>
+                </ul>
+              </section>
+              <section class="object-detail-section">
+                <div class="small-title-row">
+                  <h3>Последние проверки</h3>
+                  <span aria-hidden="true">›</span>
+                </div>
+                <ul>
+                  <li>Проверка 22.12.26</li>
+                  <li>Проверка 22.12.26</li>
+                </ul>
+              </section>
+            </article>
+
+            <article class="object-card">
+              <h2>Название объекта</h2>
+              <div class="metric-grid">
+                <div class="metric-card object-metric">
+                  <div class="metric-label-row">
+                    <p>Огнетушители</p>
+                    <span aria-hidden="true">›</span>
+                  </div>
+                  <strong>17</strong>
+                </div>
+                <div class="metric-card object-metric">
+                  <div class="metric-label-row">
+                    <p>В норме</p>
+                    <span aria-hidden="true">›</span>
+                  </div>
+                  <strong>12</strong>
+                </div>
+                <div class="metric-card object-metric">
+                  <div class="metric-label-row">
+                    <p>Требуют проверки</p>
+                    <span aria-hidden="true">›</span>
+                  </div>
+                  <strong>3</strong>
+                </div>
+                <div class="metric-card object-metric is-selected">
+                  <div class="metric-label-row">
+                    <p>Неисправные</p>
+                    <span aria-hidden="true">›</span>
+                  </div>
+                  <strong>2</strong>
+                </div>
+              </div>
+              <button type="button" class="summary-button">
+                <span>Смотреть общую сводку</span>
+                <span aria-hidden="true">›</span>
+              </button>
+              <section class="object-detail-section">
+                <div class="small-title-row">
+                  <h3>Проблемы на объекте</h3>
+                  <span aria-hidden="true">›</span>
+                </div>
+              </section>
+            </article>
+          </div>
+
+          <div class="contractor-objects-list is-hidden" data-contractor-objects>
+            <article class="contractor-object-card">
+              <div class="contractor-object-head">
+                <h2>Название объекта</h2>
+                <span>Требуется проверка</span>
+              </div>
+              <div class="contractor-object-stats">
+                <div>
+                  <p>Огнетушители</p>
+                  <strong>14</strong>
+                </div>
+                <div>
+                  <p>Требуют проверки</p>
+                  <strong>3</strong>
+                </div>
+                <div>
+                  <p>Замена</p>
+                  <strong>1</strong>
+                </div>
+              </div>
+              <button type="button" class="primary-button contractor-start-button" data-start-contractor-inspection>Начать проверку</button>
+            </article>
+
+            <article class="contractor-object-card">
+              <div class="contractor-object-head">
+                <h2>Название объекта</h2>
+              </div>
+              <div class="contractor-object-stats">
+                <div>
+                  <p>Огнетушители</p>
+                  <strong>0</strong>
+                </div>
+                <div>
+                  <p>Требуют проверки</p>
+                  <strong>0</strong>
+                </div>
+                <div>
+                  <p>Замена</p>
+                  <strong>0</strong>
+                </div>
+              </div>
+              <button type="button" class="primary-button contractor-start-button" data-start-contractor-inspection>Начать проверку</button>
+            </article>
+          </div>
+
+          <div class="objects-bottom-bar" data-organization-objects-action>
+            <button type="button" class="primary-button" id="addObjectFromObjectsButton">Добавить объект</button>
+          </div>
+        </section>
+
+        <section class="object-summary-screen" id="objectSummaryScreen" aria-labelledby="objectSummaryTitle">
+          <header class="flow-topbar">
+            <button type="button" class="flow-icon-button" id="summaryBackButton" aria-label="Назад">
+              <img src="./assets/icon-back.svg" alt="" />
+            </button>
+            <p class="flow-step-label" id="objectSummaryTitle">Название объекта</p>
+            <button type="button" class="flow-icon-button" id="summaryMenuButton" aria-label="Открыть меню">
+              <img src="./assets/icon-menu.svg" alt="" />
+            </button>
+          </header>
+
+          <div class="summary-tabs" role="tablist" aria-label="Сводка объекта">
+            <button type="button" class="is-active" data-summary-tab="structure">Структура объекта</button>
+            <button type="button" data-summary-tab="issues">Проблемы на объекте</button>
+            <button type="button" data-summary-tab="checks">Последние проверки</button>
+          </div>
+
+          <div class="summary-panel is-active" data-summary-panel="structure">
+            <div class="structure-stats">
+              <div><span>Здания</span><strong>4</strong></div>
+              <div><span>Этажи</span><strong>8</strong></div>
+              <div><span>Помещения</span><strong>17</strong></div>
+              <div><span>Мест. устан.</span><strong>28</strong></div>
+            </div>
+            <section class="fire-zone">
+              <h3>Зона ПБ 1</h3>
+              <div class="extinguisher-line">
+                <p>Огнетушитель: Номер огнетушителя</p>
+                <div class="status-row">
+                  <span>В норме</span>
+                  <span>Последняя проверка: 23.12.26</span>
+                </div>
+              </div>
+              <div class="extinguisher-line">
+                <p>Огнетушитель: Номер огнетушителя</p>
+                <div class="status-row"><span>Требует проверки</span></div>
+              </div>
+              <div class="extinguisher-line">
+                <p>Огнетушитель: Номер огнетушителя</p>
+                <div class="status-row"><span class="is-dark">Неисправен</span></div>
+              </div>
+            </section>
+            <section class="fire-zone">
+              <h3>Зона ПБ 2</h3>
+              <div class="extinguisher-line">
+                <p>Огнетушитель: Номер огнетушителя</p>
+                <div class="status-row">
+                  <span>В норме</span>
+                  <span>Последняя проверка: 23.12.26</span>
+                </div>
+              </div>
+              <div class="extinguisher-line">
+                <p>Огнетушитель: Номер огнетушителя</p>
+              </div>
+            </section>
+          </div>
+
+          <div class="summary-panel" data-summary-panel="issues">
+            <ul class="summary-list">
+              <li>Отсутствует огнетушитель в здании 1 в секции 2</li>
+              <li>Отсутствует огнетушитель в здании 1 в секции 2</li>
+              <li>Отсутствует огнетушитель в здании 1 в секции 2</li>
+            </ul>
+          </div>
+
+          <div class="summary-panel" data-summary-panel="checks">
+            <button type="button" class="check-row" data-open-check>
+              <span>Проверка 22.12.26</span>
+              <span aria-hidden="true">›</span>
+            </button>
+            <button type="button" class="check-row" data-open-check>
+              <span>Проверка 22.12.26</span>
+              <span aria-hidden="true">›</span>
+            </button>
+          </div>
+
+          <div class="object-actions summary-actions">
+            <button type="button" class="primary-button" id="requestInspectionButton">Запросить проверку</button>
+            <button type="button" class="secondary-button" id="addExtinguisherButton">Добавить новый огнетушитель</button>
+            <button type="button" class="secondary-button" id="addIssueButton">Зафиксировать неисправность</button>
+          </div>
+        </section>
+
+        <section class="check-detail-screen" id="checkDetailScreen" aria-labelledby="checkDetailTitle">
+          <header class="flow-topbar">
+            <button type="button" class="flow-icon-button" id="checkBackButton" aria-label="Назад">
+              <img src="./assets/icon-back.svg" alt="" />
+            </button>
+            <p class="flow-step-label" id="checkDetailTitle">Проверка 22.12.26</p>
+            <button type="button" class="flow-icon-button" id="checkMenuButton" aria-label="Открыть меню">
+              <img src="./assets/icon-menu.svg" alt="" />
+            </button>
+          </header>
+
+          <ul class="summary-list check-issues">
+            <li>Отсутствует огнетушитель в здании 1 в секции 2</li>
+            <li>Отсутствует огнетушитель в здании 1 в секции 2</li>
+            <li>Отсутствует огнетушитель в здании 1 в секции 2</li>
+          </ul>
+
+          <button type="button" class="primary-button download-report-button">Скачать отчет о проверке</button>
+        </section>
+
+        <section class="add-extinguisher-screen" id="addExtinguisherScreen" aria-labelledby="addExtinguisherTitle">
+          <header class="flow-topbar">
+            <button type="button" class="flow-icon-button" id="extinguisherBackButton" aria-label="Назад">
+              <img src="./assets/icon-back.svg" alt="" />
+            </button>
+            <p class="flow-step-label" id="addExtinguisherTitle">Новый огнетушитель</p>
+            <button type="button" class="flow-icon-button" id="extinguisherMenuButton" aria-label="Открыть меню">
+              <img src="./assets/icon-menu.svg" alt="" />
+            </button>
+          </header>
+
+          <div class="extinguisher-form" id="addExtinguisherFormFields">
+            <input type="text" placeholder="Ваше ФИО" aria-label="Ваше ФИО" />
+            <select aria-label="Здание">
+              <option selected disabled>Здание</option>
+              <option>Здание 1</option>
+              <option>Здание 2</option>
+            </select>
+            <select aria-label="Этаж">
+              <option selected disabled>Этаж</option>
+              <option>1 этаж</option>
+              <option>2 этаж</option>
+            </select>
+            <select aria-label="Помещение">
+              <option selected disabled>Помещение</option>
+              <option>Помещение 1</option>
+              <option>Помещение 2</option>
+            </select>
+            <select aria-label="Зона">
+              <option selected disabled>Зона</option>
+              <option>Зона ПБ 1</option>
+              <option>Зона ПБ 2</option>
+            </select>
+            <input type="text" placeholder="Номер огнетушителя" aria-label="Номер огнетушителя" id="newExtinguisherNumber" />
+            <div class="photo-upload" id="photoUpload">
+              <button type="button" class="upload-button" id="uploadPhotoButton">Загрузить фото</button>
+            </div>
+          </div>
+
+          <button type="button" class="primary-button extinguisher-save-button" id="saveExtinguisherButton">Сохранить</button>
+        </section>
+
+        <section class="add-extinguisher-screen" id="addIssueScreen" aria-labelledby="addIssueTitle">
+          <header class="flow-topbar">
+            <button type="button" class="flow-icon-button" id="issueBackButton" aria-label="Назад">
+              <img src="./assets/icon-back.svg" alt="" />
+            </button>
+            <p class="flow-step-label" id="addIssueTitle">Новая неисправность</p>
+            <button type="button" class="flow-icon-button" id="issueMenuButton" aria-label="Открыть меню">
+              <img src="./assets/icon-menu.svg" alt="" />
+            </button>
+          </header>
+
+          <div class="extinguisher-form">
+            <input type="text" placeholder="Ваше ФИО" aria-label="Ваше ФИО" />
+            <select aria-label="Здание">
+              <option selected disabled>Здание</option>
+              <option>Здание 1</option>
+              <option>Здание 2</option>
+            </select>
+            <select aria-label="Этаж">
+              <option selected disabled>Этаж</option>
+              <option>1 этаж</option>
+              <option>2 этаж</option>
+            </select>
+            <select aria-label="Помещение">
+              <option selected disabled>Помещение</option>
+              <option>Помещение 1</option>
+              <option>Помещение 2</option>
+            </select>
+            <select aria-label="Зона">
+              <option selected disabled>Зона</option>
+              <option>Зона ПБ 1</option>
+              <option>Зона ПБ 2</option>
+            </select>
+            <select aria-label="Выбрать огнетушитель">
+              <option selected disabled>Выбрать огнетушитель</option>
+              <option>Огнетушитель № 001</option>
+              <option>Огнетушитель № 002</option>
+              <option>Огнетушитель № 003</option>
+            </select>
+            <div class="photo-upload" id="issuePhotoUpload">
+              <button type="button" class="upload-button" id="uploadIssuePhotoButton">Загрузить фото</button>
+            </div>
+          </div>
+
+          <button type="button" class="primary-button extinguisher-save-button" id="saveIssueButton">Сохранить</button>
+        </section>
+
+        <section class="add-extinguisher-screen contractor-object-select-screen" id="contractorObjectSelectScreen" aria-labelledby="contractorObjectSelectTitle">
+          <header class="flow-topbar">
+            <button type="button" class="flow-icon-button" id="contractorObjectSelectBackButton" aria-label="Назад">
+              <img src="./assets/icon-back.svg" alt="" />
+            </button>
+            <p class="flow-step-label" id="contractorObjectSelectTitle">Выбор объекта</p>
+            <button type="button" class="flow-icon-button" id="contractorObjectSelectMenuButton" aria-label="Открыть меню">
+              <img src="./assets/icon-menu.svg" alt="" />
+            </button>
+          </header>
+
+          <div class="inspection-select-content">
+            <h2>Выберите объект проверки</h2>
+            <div class="contractor-objects-list">
+              <article class="contractor-object-card">
+                <div class="contractor-object-head">
+                  <h3>Название объекта</h3>
+                  <span>Требуется проверка</span>
+                </div>
+                <div class="contractor-object-stats">
+                  <div>
+                    <p>Огнетушители</p>
+                    <strong>14</strong>
+                  </div>
+                  <div>
+                    <p>Требуют проверки</p>
+                    <strong>3</strong>
+                  </div>
+                  <div>
+                    <p>Замена</p>
+                    <strong>1</strong>
+                  </div>
+                </div>
+                <button type="button" class="primary-button contractor-start-button" data-select-contractor-object>Выбрать</button>
+              </article>
+
+              <article class="contractor-object-card">
+                <div class="contractor-object-head">
+                  <h3>Название объекта</h3>
+                </div>
+                <div class="contractor-object-stats">
+                  <div>
+                    <p>Огнетушители</p>
+                    <strong>0</strong>
+                  </div>
+                  <div>
+                    <p>Требуют проверки</p>
+                    <strong>0</strong>
+                  </div>
+                  <div>
+                    <p>Замена</p>
+                    <strong>0</strong>
+                  </div>
+                </div>
+                <button type="button" class="primary-button contractor-start-button" data-select-contractor-object>Выбрать</button>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="add-extinguisher-screen contractor-employee-select-screen" id="contractorEmployeeSelectScreen" aria-labelledby="contractorEmployeeSelectTitle">
+          <header class="flow-topbar">
+            <button type="button" class="flow-icon-button" id="contractorEmployeeSelectBackButton" aria-label="Назад">
+              <img src="./assets/icon-back.svg" alt="" />
+            </button>
+            <p class="flow-step-label" id="contractorEmployeeSelectTitle">Сотрудник</p>
+            <button type="button" class="flow-icon-button" id="contractorEmployeeSelectMenuButton" aria-label="Открыть меню">
+              <img src="./assets/icon-menu.svg" alt="" />
+            </button>
+          </header>
+
+          <div class="inspection-select-content">
+            <h2>Кто проводит проверку</h2>
+            <div class="extinguisher-form inspection-form">
+              <label class="inspection-field">
+                <span>Сотрудник</span>
+                <select id="inspectionEmployeeSelect">
+                  <option>Иванов Иван Иванович</option>
+                  <option>Петров Петр Петрович</option>
+                  <option>Сидорова Анна Сергеевна</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <button type="button" class="primary-button extinguisher-save-button" id="continueInspectionEmployeeButton">Продолжить</button>
+        </section>
+
+        <section class="add-extinguisher-screen contractor-inspection-screen" id="contractorInspectionScreen" aria-labelledby="contractorInspectionTitle">
+          <header class="flow-topbar">
+            <button type="button" class="flow-icon-button" id="contractorInspectionBackButton" aria-label="Назад">
+              <img src="./assets/icon-back.svg" alt="" />
+            </button>
+            <p class="flow-step-label" id="contractorInspectionTitle">Проверка объекта</p>
+            <button type="button" class="flow-icon-button" id="contractorInspectionMenuButton" aria-label="Открыть меню">
+              <img src="./assets/icon-menu.svg" alt="" />
+            </button>
+          </header>
+
+          <div class="inspection-list" id="inspectionList">
+            <article class="inspection-card">
+              <h2>Огнетушитель № 001</h2>
+              <div class="extinguisher-form inspection-form">
+                <label class="inspection-field">
+                  <span>Наименование производителя</span>
+                  <input type="text" value="ООО «Пожтехника»" />
+                </label>
+                <label class="inspection-field">
+                  <span>Дата выпуска</span>
+                  <input type="text" value="12.03.2024" />
+                </label>
+                <label class="inspection-field">
+                  <span>Внешний вид</span>
+                  <input type="text" value="Без повреждений" />
+                </label>
+                <label class="inspection-field">
+                  <span>Полная масса</span>
+                  <input type="text" value="8,4 кг" />
+                </label>
+                <label class="inspection-field">
+                  <span>Давление</span>
+                  <input type="text" value="1,4 МПа" />
+                </label>
+                <label class="inspection-field">
+                  <span>Состояние</span>
+                  <input type="text" value="Рабочее" />
+                </label>
+                <label class="inspection-field">
+                  <span>Меры по устранению</span>
+                  <input type="text" value="Не требуются" />
+                </label>
+                <label class="inspection-field">
+                  <span>Номер присвоенный</span>
+                  <input type="text" value="ПБ-001" />
+                </label>
+                <label class="inspection-field">
+                  <span>Номер заводской</span>
+                  <input type="text" value="А-12994" />
+                </label>
+                <label class="inspection-field">
+                  <span>Итог проверки</span>
+                  <select>
+                    <option>Исправен</option>
+                    <option>Требует замены</option>
+                  </select>
+                </label>
+                <div class="photo-upload">
+                  <button type="button" class="upload-button" data-contractor-photo-upload>Загрузить фото</button>
+                </div>
+                <button type="button" class="secondary-button decommission-button" data-decommission-extinguisher>Снять с эксплуатации</button>
+              </div>
+            </article>
+
+            <article class="inspection-card">
+              <h2>Огнетушитель № 002</h2>
+              <div class="extinguisher-form inspection-form">
+                <label class="inspection-field">
+                  <span>Наименование производителя</span>
+                  <input type="text" value="ООО «Пожтехника»" />
+                </label>
+                <label class="inspection-field">
+                  <span>Дата выпуска</span>
+                  <input type="text" value="20.05.2023" />
+                </label>
+                <label class="inspection-field">
+                  <span>Внешний вид</span>
+                  <input type="text" value="Есть потертости" />
+                </label>
+                <label class="inspection-field">
+                  <span>Полная масса</span>
+                  <input type="text" value="8,1 кг" />
+                </label>
+                <label class="inspection-field">
+                  <span>Давление</span>
+                  <input type="text" value="1,1 МПа" />
+                </label>
+                <label class="inspection-field">
+                  <span>Состояние</span>
+                  <input type="text" value="Требует внимания" />
+                </label>
+                <label class="inspection-field">
+                  <span>Меры по устранению</span>
+                  <input type="text" value="Проверить давление" />
+                </label>
+                <label class="inspection-field">
+                  <span>Номер присвоенный</span>
+                  <input type="text" value="ПБ-002" />
+                </label>
+                <label class="inspection-field">
+                  <span>Номер заводской</span>
+                  <input type="text" value="А-13208" />
+                </label>
+                <label class="inspection-field">
+                  <span>Итог проверки</span>
+                  <select>
+                    <option>Исправен</option>
+                    <option selected>Требует замены</option>
+                  </select>
+                </label>
+                <div class="photo-upload">
+                  <button type="button" class="upload-button" data-contractor-photo-upload>Загрузить фото</button>
+                </div>
+                <button type="button" class="secondary-button decommission-button" data-decommission-extinguisher>Снять с эксплуатации</button>
+              </div>
+            </article>
+          </div>
+
+          <button type="button" class="secondary-button inspection-add-button" id="addContractorExtinguisherButton">Добавить новый огнетушитель</button>
+          <button type="button" class="primary-button extinguisher-save-button" id="finishContractorInspectionButton">Завершить проверку</button>
+        </section>
+
+        <section class="object-flow" id="objectFlow" aria-labelledby="objectFlowTitle">
+          <header class="flow-topbar">
+            <button type="button" class="flow-icon-button" data-object-back aria-label="Назад">
+              <img src="./assets/icon-back.svg" alt="" />
+            </button>
+            <p class="flow-step-label" id="objectStepLabel">Шаг 1 из 3</p>
+            <button type="button" class="flow-icon-button" id="objectMenuButton" aria-label="Открыть меню">
+              <img src="./assets/icon-menu.svg" alt="" />
+            </button>
+          </header>
+
+          <div class="object-step is-active" data-object-step="1">
+            <div class="object-content">
+              <h2 id="objectFlowTitle">Добавление объекта</h2>
+              <div class="object-fields">
+                <input type="text" placeholder="Название объекта" aria-label="Название объекта" />
+                <input type="text" placeholder="Адрес" aria-label="Адрес" />
+                <div class="document-group" data-document-group>
+                  <div class="document-grid"></div>
+                  <button type="button" class="upload-button" data-upload-label="Договор">Загрузить договор</button>
+                </div>
+                <div class="document-group" data-document-group>
+                  <div class="document-grid"></div>
+                  <button type="button" class="upload-button" data-upload-label="ТЗ">Загрузить ТЗ</button>
+                </div>
+                <div class="document-group" data-document-group>
+                  <div class="document-grid"></div>
+                  <button type="button" class="upload-button" data-upload-label="План размещения средств ПБ">Загрузить план размещения средств ПБ</button>
+                </div>
+              </div>
+            </div>
+            <div class="object-actions">
+              <button type="button" class="primary-button" data-object-next>Далее</button>
+            </div>
+          </div>
+
+          <div class="object-step" data-object-step="2">
+            <div class="object-content">
+              <h2>Структура объекта</h2>
+              <div class="object-empty">
+                <h3>Тут пока пусто</h3>
+                <p>Вы еще не добавили ни одного здания</p>
+              </div>
+            </div>
+            <div class="object-actions">
+              <button type="button" class="primary-button" data-object-next>Далее</button>
+              <button type="button" class="secondary-button" data-add-room>Добавить помещение</button>
+            </div>
+          </div>
+
+          <div class="object-step" data-object-step="3">
+            <div class="object-content">
+              <h2>Структура объекта</h2>
+              <div class="rooms-list" id="roomsList"></div>
+            </div>
+            <div class="object-actions">
+              <button type="button" class="primary-button" id="saveObjectButton">Сохранить</button>
+              <button type="button" class="secondary-button" data-add-room>Добавить помещение</button>
+            </div>
+          </div>
+        </section>
+        <div class="modal-overlay" id="inspectionModal" aria-hidden="true">
+          <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="inspectionModalTitle">
+            <h2 id="inspectionModalTitle">Проверка запрошена</h2>
+            <p id="inspectionModalText">Мы свяжемся с вами, чтобы согласовать дату и детали проверки.</p>
+            <button type="button" class="primary-button" id="inspectionModalClose">Понятно</button>
+          </div>
+        </div>
+        <div class="modal-overlay" id="decommissionModal" aria-hidden="true">
+          <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="decommissionModalTitle">
+            <h2 id="decommissionModalTitle">Снять с эксплуатации?</h2>
+            <p>Вы уверены, что хотите снять этот огнетушитель с эксплуатации?</p>
+            <div class="modal-actions">
+              <button type="button" class="secondary-button" id="decommissionCancelButton">Отмена</button>
+              <button type="button" class="primary-button" id="decommissionConfirmButton">Да</button>
+            </div>
+          </div>
+        </div>
+        <div class="snackbar" id="snackbar" role="status" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
