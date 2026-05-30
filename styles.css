@@ -1328,20 +1328,58 @@ button:focus-visible {
 
 .inspection-card {
   display: grid;
-  gap: 16px;
+  gap: 0;
   border-radius: var(--radius);
-  background: var(--surface);
+  background: transparent;
 }
 
-.inspection-card h2 {
+.inspection-card-toggle {
+  width: 100%;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 20px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.inspection-card-toggle span:first-child {
   color: var(--text);
   font-size: 18px;
   font-weight: 500;
   line-height: 1.4;
 }
 
+.inspection-card-arrow {
+  color: var(--muted);
+  font-size: 28px;
+  line-height: 1;
+  transform: rotate(90deg);
+  transition: transform 0.18s ease;
+}
+
+.inspection-card.is-open .inspection-card-arrow {
+  transform: rotate(-90deg);
+}
+
+.inspection-card.is-open .inspection-card-toggle {
+  margin-bottom: 16px;
+}
+
 .inspection-form {
+  gap: 12px;
   padding-top: 0;
+  padding-bottom: 16px;
+}
+
+.inspection-form[hidden] {
+  display: none;
 }
 
 .inspection-field {

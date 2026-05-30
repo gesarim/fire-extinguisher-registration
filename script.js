@@ -125,7 +125,7 @@ let employeeCount = 0;
 let clientCount = 0;
 let accountDocumentReplaceCount = 0;
 let pendingDecommissionButton = null;
-let contractorExtinguisherCount = 2;
+let contractorExtinguisherCount = 10;
 
 const checkDetails = {
   inspection: {
@@ -158,6 +158,24 @@ const checkDetails = {
     showReport: true,
   },
 };
+
+const contractorExtinguishers = Array.from({ length: 10 }, (_, index) => {
+  const number = String(index + 1).padStart(3, "0");
+  const isEven = index % 2 === 1;
+
+  return {
+    number,
+    place: `Здание 1, этаж ${index + 1}, зона ПБ ${index + 1}`,
+    name: isEven ? "ОП-4" : "ОУ-5",
+    manufacturer: isEven ? "ООО «Пожтехника-Сервис»" : "ООО «Пожтехника»",
+    releaseDate: isEven ? "20.05.2023" : "12.03.2024",
+    factoryNumber: `А-${12994 + index}`,
+    assignedNumber: `ПБ-${number}`,
+    mass: isEven ? "8,1 кг" : "8,4 кг",
+    checkType: isEven ? "Внеплановая" : "Плановая",
+    result: isEven ? "Требуется замена" : "Годный к эксплуатации",
+  };
+});
 
 function getTotalSteps() {
   return authMode === "login" ? 2 : 3;
@@ -1208,35 +1226,45 @@ function bindDecommissionButton(button) {
   });
 }
 
-function createContractorInspectionCard(number) {
+function getSelectOptions(options, selectedValue) {
+  return options
+    .map((option) => `<option${option === selectedValue ? " selected" : ""}>${escapeHtml(option)}</option>`)
+    .join("");
+}
+
+function createContractorInspectionCard(data, isOpen = false) {
+  const number = data.number || "001";
   const card = document.createElement("article");
-  card.className = "inspection-card";
+  card.className = `inspection-card${isOpen ? " is-open" : ""}`;
   card.innerHTML = `
-    <h2>Огнетушитель № ${escapeHtml(number)}</h2>
-    <div class="extinguisher-form inspection-form">
+    <button type="button" class="inspection-card-toggle" aria-expanded="${isOpen ? "true" : "false"}">
+      <span>Огнетушитель № ${escapeHtml(number)}</span>
+      <span class="inspection-card-arrow" aria-hidden="true">›</span>
+    </button>
+    <div class="extinguisher-form inspection-form" ${isOpen ? "" : "hidden"}>
       <label class="inspection-field">
         <span>Место установки</span>
-        <input type="text" />
+        <input type="text" value="${escapeHtml(data.place || "")}" />
       </label>
       <label class="inspection-field inspection-field-accent">
         <span>Наименование огнетушителя</span>
-        <input type="text" />
+        <input type="text" value="${escapeHtml(data.name || "")}" />
       </label>
       <label class="inspection-field">
         <span>Наименование производителя</span>
-        <input type="text" />
+        <input type="text" value="${escapeHtml(data.manufacturer || "")}" />
       </label>
       <label class="inspection-field">
         <span>Дата выпуска</span>
-        <input type="text" />
+        <input type="text" value="${escapeHtml(data.releaseDate || "")}" />
       </label>
       <label class="inspection-field">
         <span>Номер заводской</span>
-        <input type="text" />
+        <input type="text" value="${escapeHtml(data.factoryNumber || "")}" />
       </label>
       <label class="inspection-field">
         <span>Номер присвоенный (эксплуатационный номер)</span>
-        <input type="text" value="${escapeHtml(number)}" />
+        <input type="text" value="${escapeHtml(data.assignedNumber || number)}" />
       </label>
       <label class="inspection-field">
         <span>Внешний вид</span>
@@ -1247,28 +1275,33 @@ function createContractorInspectionCard(number) {
       </div>
       <label class="inspection-field">
         <span>Полная масса (для углекислого огнетушителя)</span>
-        <input type="text" />
+        <input type="text" value="${escapeHtml(data.mass || "")}" />
       </label>
       <label class="inspection-field">
         <span>Вид проверки</span>
         <select>
-          <option>Первичная</option>
-          <option>Плановая</option>
-          <option>Внеплановая</option>
+          ${getSelectOptions(["Первичная", "Плановая", "Внеплановая"], data.checkType || "Плановая")}
         </select>
       </label>
       <label class="inspection-field">
         <span>Результат проверки</span>
         <select>
-          <option>Годный к эксплуатации</option>
-          <option>Требует перезарядки</option>
-          <option>Требует ремонта</option>
-          <option>Требуется замена</option>
+          ${getSelectOptions(["Годный к эксплуатации", "Требует перезарядки", "Требует ремонта", "Требуется замена"], data.result || "Годный к эксплуатации")}
         </select>
       </label>
       <button type="button" class="secondary-button decommission-button" data-decommission-extinguisher>Снять с эксплуатации</button>
     </div>
   `;
+
+  const toggle = card.querySelector(".inspection-card-toggle");
+  const body = card.querySelector(".inspection-form");
+
+  toggle.addEventListener("click", () => {
+    const nextState = !card.classList.contains("is-open");
+    card.classList.toggle("is-open", nextState);
+    toggle.setAttribute("aria-expanded", String(nextState));
+    body.hidden = !nextState;
+  });
 
   bindContractorPhotoUpload(card.querySelector("[data-contractor-photo-upload]"));
   bindDecommissionButton(card.querySelector("[data-decommission-extinguisher]"));
@@ -1276,10 +1309,24 @@ function createContractorInspectionCard(number) {
   return card;
 }
 
+function renderContractorInspectionList() {
+  inspectionList.innerHTML = "";
+  contractorExtinguishers.forEach((extinguisher) => {
+    inspectionList.append(createContractorInspectionCard(extinguisher));
+  });
+}
+
 function addContractorInspectionCard() {
   contractorExtinguisherCount += 1;
   const number = newExtinguisherNumber.value.trim() || String(contractorExtinguisherCount).padStart(3, "0");
-  inspectionList.append(createContractorInspectionCard(number));
+  const extinguisher = {
+    number,
+    assignedNumber: `ПБ-${number}`,
+    checkType: "Плановая",
+    result: "Годный к эксплуатации",
+  };
+  contractorExtinguishers.push(extinguisher);
+  inspectionList.append(createContractorInspectionCard(extinguisher, true));
   addExtinguisherFormFields.querySelectorAll("input").forEach((input) => {
     input.value = "";
   });
@@ -1319,6 +1366,8 @@ document.querySelectorAll("[data-contractor-photo-upload]").forEach((button) => 
 document.querySelectorAll("[data-decommission-extinguisher]").forEach((button) => {
   bindDecommissionButton(button);
 });
+
+renderContractorInspectionList();
 
 addContractorExtinguisherButton.addEventListener("click", () => {
   openAddExtinguisher("contractorInspection");
