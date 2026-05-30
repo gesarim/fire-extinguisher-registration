@@ -145,7 +145,7 @@ const checkDetails = {
       "Заменено на: Огнетушитель ОУ-5, N ПБ-003",
       "Выполнил: Иванов Иван Иванович",
     ],
-    showReport: false,
+    showReport: true,
   },
   addition: {
     title: "Добавление нового огнетушителя",
@@ -155,7 +155,7 @@ const checkDetails = {
       "Место установки: здание 1, этаж 2, помещение 204",
       "Выполнил: Иванов Иван Иванович",
     ],
-    showReport: false,
+    showReport: true,
   },
 };
 
