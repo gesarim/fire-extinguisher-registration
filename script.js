@@ -10,6 +10,9 @@ const accountScreen = document.querySelector("#accountScreen");
 const objectsScreen = document.querySelector("#objectsScreen");
 const objectSummaryScreen = document.querySelector("#objectSummaryScreen");
 const checkDetailScreen = document.querySelector("#checkDetailScreen");
+const checkDetailTitle = document.querySelector("#checkDetailTitle");
+const checkDetailList = document.querySelector("#checkDetailList");
+const downloadReportButton = document.querySelector("#downloadReportButton");
 const addExtinguisherScreen = document.querySelector("#addExtinguisherScreen");
 const addIssueScreen = document.querySelector("#addIssueScreen");
 const contractorObjectSelectScreen = document.querySelector("#contractorObjectSelectScreen");
@@ -123,6 +126,38 @@ let clientCount = 0;
 let accountDocumentReplaceCount = 0;
 let pendingDecommissionButton = null;
 let contractorExtinguisherCount = 2;
+
+const checkDetails = {
+  inspection: {
+    title: "Проверка 22.12.26",
+    rows: [
+      "Отсутствует огнетушитель в здании 1 в секции 2",
+      "Отсутствует огнетушитель в здании 1 в секции 2",
+      "Отсутствует огнетушитель в здании 1 в секции 2",
+    ],
+    showReport: true,
+  },
+  decommission: {
+    title: "Снятие огнетушителя с эксплуатации",
+    rows: [
+      "Снято: Огнетушитель ОП-4, N ПБ-002",
+      "Причина: требуется замена",
+      "Заменено на: Огнетушитель ОУ-5, N ПБ-003",
+      "Выполнил: Иванов Иван Иванович",
+    ],
+    showReport: false,
+  },
+  addition: {
+    title: "Добавление нового огнетушителя",
+    rows: [
+      "Добавлено: Огнетушитель ОУ-5, N ПБ-003",
+      "Вместо: Огнетушитель ОП-4, N ПБ-002",
+      "Место установки: здание 1, этаж 2, помещение 204",
+      "Выполнил: Иванов Иван Иванович",
+    ],
+    showReport: false,
+  },
+};
 
 function getTotalSteps() {
   return authMode === "login" ? 2 : 3;
@@ -418,7 +453,15 @@ function showObjectSummary() {
   objectSummaryScreen.classList.add("is-active");
 }
 
-function showCheckDetail() {
+function setCheckDetail(type = "inspection") {
+  const detail = checkDetails[type] || checkDetails.inspection;
+  checkDetailTitle.textContent = detail.title;
+  checkDetailList.innerHTML = detail.rows.map((row) => `<li>${escapeHtml(row)}</li>`).join("");
+  downloadReportButton.classList.toggle("is-hidden", !detail.showReport);
+}
+
+function showCheckDetail(type = "inspection") {
+  setCheckDetail(type);
   dashboardScreen.classList.remove("is-active");
   menuScreen.classList.remove("is-active");
   accountScreen.classList.remove("is-active");
@@ -1020,7 +1063,7 @@ document.querySelectorAll("[data-summary-tab]").forEach((button) => {
 
 document.querySelectorAll("[data-open-check]").forEach((button) => {
   button.addEventListener("click", () => {
-    showCheckDetail();
+    showCheckDetail(button.dataset.checkType);
   });
 });
 

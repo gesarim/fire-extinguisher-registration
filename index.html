@@ -572,22 +572,22 @@
           </div>
 
           <div class="summary-panel" data-summary-panel="checks">
-            <button type="button" class="check-row" data-open-check>
+            <button type="button" class="check-row" data-open-check data-check-type="inspection">
               <span>Проверка 22.12.26</span>
               <span aria-hidden="true">›</span>
             </button>
-            <button type="button" class="check-row" data-open-check>
+            <button type="button" class="check-row" data-open-check data-check-type="inspection">
               <span>Проверка 22.12.26</span>
               <span aria-hidden="true">›</span>
             </button>
-            <div class="check-row">
+            <button type="button" class="check-row" data-open-check data-check-type="decommission">
               <span>Снятие огнетушителя с эксплуатации</span>
-              <span aria-hidden="true"></span>
-            </div>
-            <div class="check-row">
+              <span aria-hidden="true">›</span>
+            </button>
+            <button type="button" class="check-row" data-open-check data-check-type="addition">
               <span>Добавление нового огнетушителя</span>
-              <span aria-hidden="true"></span>
-            </div>
+              <span aria-hidden="true">›</span>
+            </button>
           </div>
 
           <div class="object-actions summary-actions">
@@ -608,13 +608,13 @@
             </button>
           </header>
 
-          <ul class="summary-list check-issues">
+          <ul class="summary-list check-issues" id="checkDetailList">
             <li>Отсутствует огнетушитель в здании 1 в секции 2</li>
             <li>Отсутствует огнетушитель в здании 1 в секции 2</li>
             <li>Отсутствует огнетушитель в здании 1 в секции 2</li>
           </ul>
 
-          <button type="button" class="primary-button download-report-button">Скачать отчет о проверке</button>
+          <button type="button" class="primary-button download-report-button" id="downloadReportButton">Скачать отчет о проверке</button>
         </section>
 
         <section class="add-extinguisher-screen" id="addExtinguisherScreen" aria-labelledby="addExtinguisherTitle">
