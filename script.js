@@ -1172,6 +1172,14 @@ function createContractorInspectionCard(number) {
     <h2>Огнетушитель № ${escapeHtml(number)}</h2>
     <div class="extinguisher-form inspection-form">
       <label class="inspection-field">
+        <span>Место установки</span>
+        <input type="text" />
+      </label>
+      <label class="inspection-field inspection-field-accent">
+        <span>Наименование огнетушителя</span>
+        <input type="text" />
+      </label>
+      <label class="inspection-field">
         <span>Наименование производителя</span>
         <input type="text" />
       </label>
@@ -1180,43 +1188,41 @@ function createContractorInspectionCard(number) {
         <input type="text" />
       </label>
       <label class="inspection-field">
-        <span>Внешний вид</span>
-        <input type="text" />
-      </label>
-      <label class="inspection-field">
-        <span>Полная масса</span>
-        <input type="text" />
-      </label>
-      <label class="inspection-field">
-        <span>Давление</span>
-        <input type="text" />
-      </label>
-      <label class="inspection-field">
-        <span>Состояние</span>
-        <input type="text" />
-      </label>
-      <label class="inspection-field">
-        <span>Меры по устранению</span>
-        <input type="text" />
-      </label>
-      <label class="inspection-field">
-        <span>Номер присвоенный</span>
-        <input type="text" value="${escapeHtml(number)}" />
-      </label>
-      <label class="inspection-field">
         <span>Номер заводской</span>
         <input type="text" />
       </label>
       <label class="inspection-field">
-        <span>Итог проверки</span>
-        <select>
-          <option>Исправен</option>
-          <option>Требует замены</option>
-        </select>
+        <span>Номер присвоенный (эксплуатационный номер)</span>
+        <input type="text" value="${escapeHtml(number)}" />
+      </label>
+      <label class="inspection-field">
+        <span>Внешний вид</span>
+        <span class="inspection-hint">Фото огнетушителя</span>
       </label>
       <div class="photo-upload">
         <button type="button" class="upload-button" data-contractor-photo-upload>Загрузить фото</button>
       </div>
+      <label class="inspection-field">
+        <span>Полная масса (для углекислого огнетушителя)</span>
+        <input type="text" />
+      </label>
+      <label class="inspection-field">
+        <span>Вид проверки</span>
+        <select>
+          <option>Первичная</option>
+          <option>Плановая</option>
+          <option>Внеплановая</option>
+        </select>
+      </label>
+      <label class="inspection-field">
+        <span>Результат проверки</span>
+        <select>
+          <option>Годный к эксплуатации</option>
+          <option>Требует перезарядки</option>
+          <option>Требует ремонта</option>
+          <option>Требуется замена</option>
+        </select>
+      </label>
       <button type="button" class="secondary-button decommission-button" data-decommission-extinguisher>Снять с эксплуатации</button>
     </div>
   `;

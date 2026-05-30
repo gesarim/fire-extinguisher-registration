@@ -1357,6 +1357,14 @@ button:focus-visible {
   padding-left: 2px;
 }
 
+.inspection-field-accent span {
+  color: #b3261e;
+}
+
+.inspection-hint {
+  display: block;
+}
+
 .decommission-button {
   margin-top: 8px;
 }

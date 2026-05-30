@@ -800,6 +800,14 @@
               <h2>Огнетушитель № 001</h2>
               <div class="extinguisher-form inspection-form">
                 <label class="inspection-field">
+                  <span>Место установки</span>
+                  <input type="text" value="Здание 1, этаж 1, зона ПБ 1" />
+                </label>
+                <label class="inspection-field inspection-field-accent">
+                  <span>Наименование огнетушителя</span>
+                  <input type="text" value="ОУ-5" />
+                </label>
+                <label class="inspection-field">
                   <span>Наименование производителя</span>
                   <input type="text" value="ООО «Пожтехника»" />
                 </label>
@@ -808,43 +816,41 @@
                   <input type="text" value="12.03.2024" />
                 </label>
                 <label class="inspection-field">
-                  <span>Внешний вид</span>
-                  <input type="text" value="Без повреждений" />
-                </label>
-                <label class="inspection-field">
-                  <span>Полная масса</span>
-                  <input type="text" value="8,4 кг" />
-                </label>
-                <label class="inspection-field">
-                  <span>Давление</span>
-                  <input type="text" value="1,4 МПа" />
-                </label>
-                <label class="inspection-field">
-                  <span>Состояние</span>
-                  <input type="text" value="Рабочее" />
-                </label>
-                <label class="inspection-field">
-                  <span>Меры по устранению</span>
-                  <input type="text" value="Не требуются" />
-                </label>
-                <label class="inspection-field">
-                  <span>Номер присвоенный</span>
-                  <input type="text" value="ПБ-001" />
-                </label>
-                <label class="inspection-field">
                   <span>Номер заводской</span>
                   <input type="text" value="А-12994" />
                 </label>
                 <label class="inspection-field">
-                  <span>Итог проверки</span>
-                  <select>
-                    <option>Исправен</option>
-                    <option>Требует замены</option>
-                  </select>
+                  <span>Номер присвоенный (эксплуатационный номер)</span>
+                  <input type="text" value="ПБ-001" />
+                </label>
+                <label class="inspection-field">
+                  <span>Внешний вид</span>
+                  <span class="inspection-hint">Фото огнетушителя</span>
                 </label>
                 <div class="photo-upload">
                   <button type="button" class="upload-button" data-contractor-photo-upload>Загрузить фото</button>
                 </div>
+                <label class="inspection-field">
+                  <span>Полная масса (для углекислого огнетушителя)</span>
+                  <input type="text" value="8,4 кг" />
+                </label>
+                <label class="inspection-field">
+                  <span>Вид проверки</span>
+                  <select>
+                    <option>Первичная</option>
+                    <option selected>Плановая</option>
+                    <option>Внеплановая</option>
+                  </select>
+                </label>
+                <label class="inspection-field">
+                  <span>Результат проверки</span>
+                  <select>
+                    <option selected>Годный к эксплуатации</option>
+                    <option>Требует перезарядки</option>
+                    <option>Требует ремонта</option>
+                    <option>Требуется замена</option>
+                  </select>
+                </label>
                 <button type="button" class="secondary-button decommission-button" data-decommission-extinguisher>Снять с эксплуатации</button>
               </div>
             </article>
@@ -852,6 +858,14 @@
             <article class="inspection-card">
               <h2>Огнетушитель № 002</h2>
               <div class="extinguisher-form inspection-form">
+                <label class="inspection-field">
+                  <span>Место установки</span>
+                  <input type="text" value="Здание 1, этаж 2, зона ПБ 2" />
+                </label>
+                <label class="inspection-field inspection-field-accent">
+                  <span>Наименование огнетушителя</span>
+                  <input type="text" value="ОП-4" />
+                </label>
                 <label class="inspection-field">
                   <span>Наименование производителя</span>
                   <input type="text" value="ООО «Пожтехника»" />
@@ -861,43 +875,41 @@
                   <input type="text" value="20.05.2023" />
                 </label>
                 <label class="inspection-field">
-                  <span>Внешний вид</span>
-                  <input type="text" value="Есть потертости" />
-                </label>
-                <label class="inspection-field">
-                  <span>Полная масса</span>
-                  <input type="text" value="8,1 кг" />
-                </label>
-                <label class="inspection-field">
-                  <span>Давление</span>
-                  <input type="text" value="1,1 МПа" />
-                </label>
-                <label class="inspection-field">
-                  <span>Состояние</span>
-                  <input type="text" value="Требует внимания" />
-                </label>
-                <label class="inspection-field">
-                  <span>Меры по устранению</span>
-                  <input type="text" value="Проверить давление" />
-                </label>
-                <label class="inspection-field">
-                  <span>Номер присвоенный</span>
-                  <input type="text" value="ПБ-002" />
-                </label>
-                <label class="inspection-field">
                   <span>Номер заводской</span>
                   <input type="text" value="А-13208" />
                 </label>
                 <label class="inspection-field">
-                  <span>Итог проверки</span>
-                  <select>
-                    <option>Исправен</option>
-                    <option selected>Требует замены</option>
-                  </select>
+                  <span>Номер присвоенный (эксплуатационный номер)</span>
+                  <input type="text" value="ПБ-002" />
+                </label>
+                <label class="inspection-field">
+                  <span>Внешний вид</span>
+                  <span class="inspection-hint">Фото огнетушителя</span>
                 </label>
                 <div class="photo-upload">
                   <button type="button" class="upload-button" data-contractor-photo-upload>Загрузить фото</button>
                 </div>
+                <label class="inspection-field">
+                  <span>Полная масса (для углекислого огнетушителя)</span>
+                  <input type="text" value="8,1 кг" />
+                </label>
+                <label class="inspection-field">
+                  <span>Вид проверки</span>
+                  <select>
+                    <option>Первичная</option>
+                    <option>Плановая</option>
+                    <option selected>Внеплановая</option>
+                  </select>
+                </label>
+                <label class="inspection-field">
+                  <span>Результат проверки</span>
+                  <select>
+                    <option>Годный к эксплуатации</option>
+                    <option>Требует перезарядки</option>
+                    <option>Требует ремонта</option>
+                    <option selected>Требуется замена</option>
+                  </select>
+                </label>
                 <button type="button" class="secondary-button decommission-button" data-decommission-extinguisher>Снять с эксплуатации</button>
               </div>
             </article>
