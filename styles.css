@@ -1403,6 +1403,18 @@ button:focus-visible {
   display: block;
 }
 
+.inspection-edit-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.inspection-save-changes,
+.inspection-cancel-changes {
+  height: 52px;
+  font-size: 14px;
+}
+
 .decommission-button {
   margin-top: 8px;
 }

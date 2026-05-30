@@ -1226,6 +1226,45 @@ function bindDecommissionButton(button) {
   });
 }
 
+function saveInspectionFormState(form) {
+  form.querySelectorAll("input").forEach((input) => {
+    input.defaultValue = input.value;
+  });
+
+  form.querySelectorAll("select").forEach((select) => {
+    Array.from(select.options).forEach((option) => {
+      option.defaultSelected = option.selected;
+    });
+  });
+}
+
+function resetInspectionFormState(form) {
+  form.querySelectorAll("input").forEach((input) => {
+    input.value = input.defaultValue;
+  });
+
+  form.querySelectorAll("select").forEach((select) => {
+    const savedIndex = Array.from(select.options).findIndex((option) => option.defaultSelected);
+    select.selectedIndex = savedIndex >= 0 ? savedIndex : 0;
+  });
+}
+
+function bindInspectionEditButtons(card) {
+  const form = card.querySelector(".inspection-form");
+  const saveButton = card.querySelector("[data-save-inspection-changes]");
+  const cancelButton = card.querySelector("[data-cancel-inspection-changes]");
+
+  saveButton.addEventListener("click", () => {
+    saveInspectionFormState(form);
+    showSnackbar("Изменения сохранены");
+  });
+
+  cancelButton.addEventListener("click", () => {
+    resetInspectionFormState(form);
+    showSnackbar("Изменения отменены");
+  });
+}
+
 function getSelectOptions(options, selectedValue) {
   return options
     .map((option) => `<option${option === selectedValue ? " selected" : ""}>${escapeHtml(option)}</option>`)
@@ -1289,6 +1328,10 @@ function createContractorInspectionCard(data, isOpen = false) {
           ${getSelectOptions(["Годный к эксплуатации", "Требует перезарядки", "Требует ремонта", "Требуется замена"], data.result || "Годный к эксплуатации")}
         </select>
       </label>
+      <div class="inspection-edit-actions">
+        <button type="button" class="primary-button inspection-save-changes" data-save-inspection-changes>Сохранить изменения</button>
+        <button type="button" class="secondary-button inspection-cancel-changes" data-cancel-inspection-changes>Отменить изменения</button>
+      </div>
       <button type="button" class="secondary-button decommission-button" data-decommission-extinguisher>Снять с эксплуатации</button>
     </div>
   `;
@@ -1305,6 +1348,7 @@ function createContractorInspectionCard(data, isOpen = false) {
 
   bindContractorPhotoUpload(card.querySelector("[data-contractor-photo-upload]"));
   bindDecommissionButton(card.querySelector("[data-decommission-extinguisher]"));
+  bindInspectionEditButtons(card);
 
   return card;
 }
