@@ -1700,29 +1700,16 @@ button:focus-visible {
 .extinguisher-card-place {
   grid-column: 1 / -1;
   min-width: 0;
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
+  display: block;
   color: var(--placeholder);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.4;
 }
 
-.extinguisher-card-place svg {
-  width: 15px;
-  height: 15px;
-  flex: 0 0 auto;
-  margin-top: 1px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.8;
-}
-
 .extinguisher-status {
-  width: fit-content;
+  width: max-content;
+  min-width: max-content;
   min-height: 30px;
   display: inline-flex;
   align-items: center;
@@ -1734,6 +1721,7 @@ button:focus-visible {
   line-height: 1;
   padding: 0 11px;
   white-space: nowrap;
+  word-break: keep-all;
 }
 
 .extinguisher-status.is-dark {
@@ -2465,7 +2453,7 @@ button:focus-visible {
   }
 
   .extinguisher-line {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) max-content;
     gap: 12px;
     padding: 16px;
   }
