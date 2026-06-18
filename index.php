@@ -626,6 +626,6 @@
       </section>
     </main>
 
-    <script src="./script.js?v=20260618-1"></script>
+    <script src="./script.js?v=20260618-2"></script>
   </body>
 </html>

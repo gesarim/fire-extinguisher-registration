@@ -145,6 +145,7 @@ const inspectionTypeSelect = document.querySelector("#inspectionTypeSelect");
 const API_BASE = "./api";
 const useMockFlow = false;
 const useDemoAccess = true;
+const SHARED_DEMO_VISITOR_ID = "shared-test-object-contractor-20260618";
 let currentStep = 1;
 let currentObjectStep = 1;
 let roomCount = 0;
@@ -227,28 +228,14 @@ function getAccountType() {
 
 function getDemoVisitorId() {
   const storageKey = "fireDemoVisitorId";
-  let visitorId = "";
 
   try {
-    visitorId = window.localStorage.getItem(storageKey) || "";
+    window.localStorage.setItem(storageKey, SHARED_DEMO_VISITOR_ID);
   } catch (error) {
-    visitorId = "";
+    // Демо-сценарий остается общим и без localStorage.
   }
 
-  if (!visitorId) {
-    const randomPart = window.crypto?.randomUUID
-      ? window.crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    visitorId = `demo-${randomPart}`;
-
-    try {
-      window.localStorage.setItem(storageKey, visitorId);
-    } catch (error) {
-      // If localStorage is unavailable, the backend still creates a session for this browser tab.
-    }
-  }
-
-  return visitorId;
+  return SHARED_DEMO_VISITOR_ID;
 }
 
 async function startDemoAccess(role = getAccountType()) {
@@ -450,6 +437,11 @@ async function restoreSession() {
 
     if (appState.currentUser?.role) {
       setAccountType(appState.currentUser.role);
+    }
+
+    if (useDemoAccess) {
+      await startDemoAccess(appState.currentUser?.role || getAccountType());
+      return;
     }
 
     showDashboard();
