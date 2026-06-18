@@ -1257,6 +1257,10 @@ button:focus-visible {
   padding-top: 24px;
 }
 
+.contractor-dashboard-object-list {
+  padding-top: 0;
+}
+
 .contractor-object-card {
   display: grid;
   gap: 24px;

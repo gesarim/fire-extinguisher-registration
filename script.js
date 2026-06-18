@@ -709,8 +709,12 @@ function getContractorObjectStatus(object) {
 function renderContractorDashboard() {
   const checks = appState.contractor.dashboard.checks || [];
   const upcoming = appState.contractor.dashboard.upcoming || [];
+  const objects = appState.contractor.dashboard.objects || [];
+  const objectList = contractorDashboard.querySelector(".contractor-dashboard-object-list");
   const upcomingList = contractorDashboard.querySelector(".contractor-upcoming-check-list");
   const completedCheckList = contractorDashboard.querySelector(".contractor-completed-check-list");
+
+  renderContractorObjectList(objectList, objects, "Начать проверку");
 
   upcomingList.innerHTML = "";
 
@@ -731,11 +735,6 @@ function renderContractorDashboard() {
       row.addEventListener("click", () => openContractorObjectSummary(check.object_id));
       upcomingList.append(row);
     });
-  }
-
-  const existingPreview = contractorDashboard.querySelector(".contractor-objects-list");
-  if (existingPreview) {
-    existingPreview.remove();
   }
 
   completedCheckList.innerHTML = "";

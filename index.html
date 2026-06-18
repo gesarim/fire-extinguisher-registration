@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Регистрация | Учет огнетушителей</title>
-    <link rel="stylesheet" href="./styles.css?v=20260618-7" />
+    <link rel="stylesheet" href="./styles.css?v=20260618-8" />
   </head>
   <body>
     <main class="app-shell" aria-labelledby="page-title">
@@ -158,6 +158,13 @@
           </div>
 
           <div class="dashboard-content is-hidden" data-contractor-dashboard>
+            <section class="checks-section" aria-labelledby="contractorObjectsTitle">
+              <div class="section-title-row">
+                <h2 id="contractorObjectsTitle">Мои объекты</h2>
+              </div>
+              <div class="contractor-objects-list contractor-dashboard-object-list"></div>
+            </section>
+
             <section class="checks-section" aria-labelledby="contractorUpcomingTitle">
               <div class="section-title-row">
                 <h2 id="contractorUpcomingTitle">Плановые проверки</h2>
@@ -636,6 +643,6 @@
       </section>
     </main>
 
-    <script src="./script.js?v=20260618-7"></script>
+    <script src="./script.js?v=20260618-8"></script>
   </body>
 </html>

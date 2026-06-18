@@ -54,8 +54,7 @@ $objects = db()->prepare(
      WHERE contractor_links.contractor_user_id = :contractor_user_id
        AND contractor_links.status = "active"
      GROUP BY objects.id
-     ORDER BY pending_requests DESC, objects.created_at DESC
-     LIMIT 5'
+     ORDER BY pending_requests DESC, objects.created_at DESC'
 );
 $objects->execute(['contractor_user_id' => $user['id']]);
 
