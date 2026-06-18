@@ -1,3 +1,6 @@
 .DS_Store
 mobile-preview.html
 prototype-standalone.html
+api/config.php
+api/uploads/*
+!api/uploads/.gitkeep
