@@ -1208,14 +1208,7 @@ function renderObjectSummary() {
         <h3>Таблица огнетушителей</h3>
         <button type="button" class="document-action" data-print-extinguisher-table>Печать</button>
       </div>
-      <div class="extinguisher-table">
-        <div class="extinguisher-table-head">
-          <span>Место установки</span>
-          <span>Наименование</span>
-          <span>Номер</span>
-          <span>Состояние</span>
-        </div>
-      </div>
+      <div class="extinguisher-table"></div>
     `;
     const table = zone.querySelector(".extinguisher-table");
     extinguishers.forEach((extinguisher) => {
@@ -1227,22 +1220,19 @@ function renderObjectSummary() {
       const statusText = getExtinguisherStatusText(extinguisher.status);
       const statusClass = ["broken", "decommissioned"].includes(extinguisher.status) ? " is-dark" : "";
       line.innerHTML = `
-        <div class="extinguisher-summary-field">
-          <span>Место установки</span>
-          <strong>${escapeHtml(formatExtinguisherPlace(extinguisher) || "Место не указано")}</strong>
+        <div class="extinguisher-card-main">
+          <span class="extinguisher-card-number">№ ${escapeHtml(getExtinguisherNumber(extinguisher) || "Не указан")}</span>
+          <strong class="extinguisher-card-name">${escapeHtml(getExtinguisherTypeMark(extinguisher) || "Наименование не указано")}</strong>
+          <span class="extinguisher-card-place">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11Z"></path>
+              <circle cx="12" cy="10" r="2"></circle>
+            </svg>
+            ${escapeHtml(formatExtinguisherPlace(extinguisher) || "Место установки не указано")}
+          </span>
         </div>
-        <div class="extinguisher-summary-field">
-          <span>Наименование</span>
-          <strong>${escapeHtml(getExtinguisherTypeMark(extinguisher) || "Не указано")}</strong>
-        </div>
-        <div class="extinguisher-summary-field">
-          <span>Номер присвоенный</span>
-          <strong>${escapeHtml(getExtinguisherNumber(extinguisher) || "Не указан")}</strong>
-        </div>
-        <div class="extinguisher-summary-field">
-          <span>Состояние</span>
-          <strong class="extinguisher-status${statusClass}">${escapeHtml(statusText)}</strong>
-        </div>
+        <strong class="extinguisher-status${statusClass}">${escapeHtml(statusText)}</strong>
+        <span class="extinguisher-card-arrow" aria-hidden="true">›</span>
       `;
       line.addEventListener("click", () => openExtinguisherDetail(extinguisher.id));
       table.append(line);

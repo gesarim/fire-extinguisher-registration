@@ -1644,78 +1644,107 @@ button:focus-visible {
 
 .extinguisher-table {
   display: grid;
-  gap: 8px;
-}
-
-.extinguisher-table-head {
-  display: grid;
-  grid-template-columns: 1.35fr 1fr 0.8fr 0.9fr;
-  gap: 8px;
-  color: var(--placeholder);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.3;
-  padding: 0 4px;
+  gap: 10px;
 }
 
 .extinguisher-line {
   display: grid;
-  grid-template-columns: 1.35fr 1fr 0.8fr 0.9fr;
-  gap: 8px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 14px;
+  align-items: center;
   width: 100%;
   border: 0;
   border-radius: var(--radius);
   background: var(--control);
   color: inherit;
   text-align: left;
-  padding: 14px;
+  padding: 18px 16px 18px 18px;
   cursor: pointer;
+  transition: background-color 180ms ease, box-shadow 180ms ease;
 }
 
 .extinguisher-line:hover,
 .extinguisher-line:focus-visible {
-  outline: 1px solid var(--text);
+  outline: none;
+  background: #ededf0;
+  box-shadow: inset 0 0 0 1px rgba(32, 33, 36, 0.16);
 }
 
-.extinguisher-line p {
-  color: var(--placeholder);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.extinguisher-summary-field {
+.extinguisher-card-main {
+  min-width: 0;
   display: grid;
-  gap: 3px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 5px 12px;
 }
 
-.extinguisher-summary-field span {
+.extinguisher-card-number {
   color: var(--placeholder);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.35;
-}
-
-.extinguisher-summary-field strong {
-  color: var(--text);
   font-size: 13px;
   font-weight: 600;
   line-height: 1.35;
+  white-space: nowrap;
+}
+
+.extinguisher-card-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.extinguisher-card-place {
+  grid-column: 1 / -1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: var(--placeholder);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.extinguisher-card-place svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 
 .extinguisher-status {
   width: fit-content;
-  min-height: 28px;
+  min-height: 30px;
   display: inline-flex;
   align-items: center;
-  border-radius: 6px;
+  border-radius: 999px;
   background: #fff;
-  padding: 0 10px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0 11px;
+  white-space: nowrap;
 }
 
 .extinguisher-status.is-dark {
   background: var(--text);
   color: var(--surface);
+}
+
+.extinguisher-card-arrow {
+  color: var(--placeholder);
+  font-size: 24px;
+  line-height: 1;
 }
 
 .status-row {
@@ -2435,12 +2464,28 @@ button:focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .extinguisher-table-head {
+  .extinguisher-line {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .extinguisher-card-main {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+
+  .extinguisher-card-place {
+    grid-column: 1;
+    margin-top: 6px;
+  }
+
+  .extinguisher-card-arrow {
     display: none;
   }
 
-  .extinguisher-line {
-    grid-template-columns: 1fr;
+  .extinguisher-status {
+    align-self: start;
   }
 }
 
