@@ -2319,6 +2319,66 @@ button:focus-visible {
   color: #b3261e;
 }
 
+.inspection-work-types {
+  display: grid;
+  gap: 10px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--control);
+  padding: 14px;
+}
+
+.inspection-work-types legend {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 650;
+  padding: 0;
+}
+
+.inspection-work-types > p {
+  margin: 0;
+  color: var(--placeholder);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.inspection-work-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.inspection-work-option {
+  min-height: 46px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.extinguisher-form .inspection-work-option input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--text);
+  cursor: pointer;
+}
+
+.inspection-work-option span {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.inspection-work-option:has(input:checked) {
+  box-shadow: inset 0 0 0 1px var(--text);
+}
+
 .inspection-hint {
   display: block;
 }

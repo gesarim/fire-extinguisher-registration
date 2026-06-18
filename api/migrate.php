@@ -57,6 +57,7 @@ $queries = [
       post_recharge_result VARCHAR(255) NULL,
       mass VARCHAR(120) NULL,
       check_type VARCHAR(120) NULL,
+      work_types TEXT NULL,
       result VARCHAR(255) NULL,
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (inspection_id) REFERENCES inspections(id) ON DELETE CASCADE,
@@ -139,6 +140,7 @@ add_column_if_missing('inspection_items', 'recharge_date', 'VARCHAR(120) NULL');
 add_column_if_missing('inspection_items', 'otv_mark', 'VARCHAR(255) NULL');
 add_column_if_missing('inspection_items', 'post_recharge_result', 'VARCHAR(255) NULL');
 add_column_if_missing('inspection_items', 'comment', 'TEXT NULL');
+add_column_if_missing('inspection_items', 'work_types', 'TEXT NULL');
 add_column_if_missing('issues', 'comment', 'TEXT NULL');
 
 db()->exec('ALTER TABLE extinguishers MODIFY status ENUM("ok", "needs_check", "broken", "decommissioned") NOT NULL DEFAULT "ok"');

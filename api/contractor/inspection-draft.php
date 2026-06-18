@@ -53,6 +53,11 @@ function normalize_draft_items($items)
             continue;
         }
 
+        $workTypes = isset($item['workTypes']) && is_array($item['workTypes']) ? $item['workTypes'] : [];
+        $workTypes = array_values(array_filter(array_map(function ($workType) {
+            return trim((string)$workType);
+        }, $workTypes)));
+
         $normalized[] = [
             'id' => (int)(isset($item['id']) ? $item['id'] : 0),
             'roomId' => (int)(isset($item['roomId']) ? $item['roomId'] : 0),
@@ -75,6 +80,7 @@ function normalize_draft_items($items)
             'postRechargeResult' => trim((string)(isset($item['postRechargeResult']) ? $item['postRechargeResult'] : '')),
             'mass' => trim((string)(isset($item['mass']) ? $item['mass'] : '')),
             'checkType' => trim((string)(isset($item['checkType']) ? $item['checkType'] : '')) ?: 'Ежеквартальная',
+            'workTypes' => $workTypes,
             'result' => trim((string)(isset($item['result']) ? $item['result'] : '')) ?: 'Годный к эксплуатации',
             'comment' => trim((string)(isset($item['comment']) ? $item['comment'] : '')),
             'decommissioned' => !empty($item['decommissioned']),

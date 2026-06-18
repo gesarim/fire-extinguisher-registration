@@ -150,6 +150,15 @@ const API_BASE = "./api";
 const useMockFlow = false;
 const useDemoAccess = true;
 const SHARED_DEMO_VISITOR_ID = "shared-test-object-contractor-20260618";
+const INSPECTION_WORK_TYPES = [
+  "Технический осмотр снаружи",
+  "Технический осмотр внутри",
+  "Проверка качества ОТВ",
+  "Контроль веса ОТВ (взвешивание для ОУ)",
+  "Перезарядка",
+  "Проверка работоспособности",
+  "Гидравлическое/пневматическое испытание",
+];
 let currentStep = 1;
 let currentObjectStep = 1;
 let roomCount = 0;
@@ -496,6 +505,32 @@ function getInspectionType(inspection) {
 
 function getInspectionTitle(inspection) {
   return `${getInspectionType(inspection)} проверка`;
+}
+
+function getInspectionWorkTypes(item) {
+  const source = item?.work_types ?? item?.workTypes ?? [];
+
+  if (Array.isArray(source)) {
+    return source.filter(Boolean);
+  }
+
+  if (typeof source === "string" && source.trim()) {
+    try {
+      const parsed = JSON.parse(source);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(Boolean);
+      }
+    } catch (error) {
+      return source.split(/\s*;\s*/).filter(Boolean);
+    }
+  }
+
+  return [];
+}
+
+function formatInspectionWorkTypes(item) {
+  const workTypes = getInspectionWorkTypes(item);
+  return workTypes.length ? workTypes.join("; ") : "Работы не указаны";
 }
 
 function createEmptyState(title, text) {
@@ -1592,6 +1627,7 @@ function openCheckDetail(inspection, returnView = "objectSummary") {
           <strong>Огнетушитель № ${escapeHtml(item.number)}</strong>
           <small>${escapeHtml(item.place || "Место не указано")}</small>
           <small>${escapeHtml(item.check_type || "Проверка")} · ${escapeHtml(item.result || "Результат не указан")}</small>
+          <small>Работы: ${escapeHtml(formatInspectionWorkTypes(item))}</small>
           ${item.comment ? `<small>Комментарий: ${escapeHtml(item.comment)}</small>` : ""}
         </span>
       `;
@@ -3545,6 +3581,10 @@ function bindDecommissionButton(button) {
 
 function saveInspectionFormState(form) {
   form.querySelectorAll("input, textarea").forEach((input) => {
+    if (input.type === "checkbox") {
+      input.defaultChecked = input.checked;
+      return;
+    }
     input.defaultValue = input.value;
   });
 
@@ -3557,6 +3597,10 @@ function saveInspectionFormState(form) {
 
 function resetInspectionFormState(form) {
   form.querySelectorAll("input, textarea").forEach((input) => {
+    if (input.type === "checkbox") {
+      input.checked = input.defaultChecked;
+      return;
+    }
     input.value = input.defaultValue;
   });
 
@@ -3624,6 +3668,7 @@ function applyContractorInspectionDraft(objectId) {
     comment: item.comment,
     mass: item.mass,
     checkType: item.checkType,
+    workTypes: getInspectionWorkTypes(item),
     result: item.result,
     decommissioned: item.decommissioned,
   }));
@@ -3788,7 +3833,7 @@ function getExtinguisherHistory(extinguisher) {
           at: inspection.completed_at || inspection.planned_at || inspection.created_at || item.created_at || "",
           actor: inspection.employee_name || inspection.contractor_name || "Не указано",
           actorRole: "contractor",
-          details: [`${item.check_type || "Проверка"} · ${result}`, item.comment || ""].filter(Boolean).join(" · "),
+          details: [`${item.check_type || "Проверка"} · ${result}`, formatInspectionWorkTypes(item), item.comment || ""].filter(Boolean).join(" · "),
           source: getInspectionTitle(inspection),
         });
       });
@@ -4185,6 +4230,7 @@ function getObjectReportSections() {
       getInspectionTitle(inspection),
       item.number || "",
       item.place || "",
+      formatInspectionWorkTypes(item),
       item.result || "",
       item.comment || "",
       item.next_planned_test_date || "",
@@ -4239,7 +4285,7 @@ function getObjectReportSections() {
     },
     {
       title: "Результаты проверок",
-      headers: ["Дата", "Проверка", "Номер", "Место", "Результат", "Комментарий", "Следующее испытание", "Перезарядка", "Следующая перезарядка", "Ответственный"],
+      headers: ["Дата", "Проверка", "Номер", "Место", "Выполненные работы", "Результат", "Комментарий", "Следующее испытание", "Перезарядка", "Следующая перезарядка", "Ответственный"],
       rows: inspectionItems,
     },
   ];
@@ -4332,6 +4378,7 @@ function downloadObjectReportPdf() {
 const INSPECTION_REPORT_COLUMNS = [
   "Номер и марка огнетушителя",
   "Дата проведения испытания, перезарядки, ремонта; организация, проводившая техобслуживание или ремонт",
+  "Выполненные работы",
   "Результаты осмотра и испытания на прочность",
   "Срок следующего планового испытания",
   "Дата проведения перезарядки огнетушителя",
@@ -4346,7 +4393,7 @@ function getItemValue(item, snakeKey, camelKey) {
 }
 
 function getInspectionReportTitle(inspection) {
-  const objectName = appState.currentObject?.object?.name || appState.contractor.currentObject?.object?.name || "объект";
+  const objectName = inspection?.object_name || appState.currentObject?.object?.name || appState.contractor.currentObject?.object?.name || "объект";
   const inspectionTitle = getInspectionTitle(inspection || { inspectionType: inspectionTypeSelect?.value });
   return `${inspectionTitle}: ${objectName}`;
 }
@@ -4365,6 +4412,7 @@ function getInspectionReportRows(inspection) {
     return [
       [number ? `№ ${number}` : "", mark].filter(Boolean).join(", ") || "Не указано",
       serviceText || "Не указано",
+      formatInspectionWorkTypes(item),
       item.result || "Не указано",
       getItemValue(item, "next_planned_test_date", "nextTestDate") || "Не указано",
       getItemValue(item, "recharge_date", "rechargeDate") || "Не указано",
@@ -4440,12 +4488,12 @@ function downloadInspectionReportExcel(inspection) {
 }
 
 function buildInspectionReportPdfCanvases(inspection, rows) {
-  const width = 1754;
+  const width = 1940;
   const height = 1240;
   const margin = 44;
-  const columns = [140, 270, 205, 170, 175, 190, 180, 180, 210];
+  const columns = [135, 245, 250, 190, 155, 170, 175, 170, 170, 190];
   const headerHeight = 190;
-  const rowHeight = 118;
+  const rowHeight = 190;
   const canvases = [];
   let canvas = document.createElement("canvas");
   let context = canvas.getContext("2d");
@@ -4571,6 +4619,7 @@ function mapExtinguisherToInspection(extinguisher) {
     checkType: getInspectionType({
       inspectionType: extinguisher.checkType || inspectionTypeSelect?.value,
     }),
+    workTypes: getInspectionWorkTypes(extinguisher),
     result: extinguisher.result || getInspectionResultByStatus(extinguisher.status),
     decommissioned: extinguisher.status === "decommissioned",
   };
@@ -4593,6 +4642,13 @@ function createContractorInspectionCard(data, isOpen = false) {
   card.dataset.extinguisherId = data.id || "";
   card.dataset.roomId = data.roomId || "";
   card.dataset.decommissioned = data.decommissioned ? "true" : "false";
+  const selectedWorkTypes = new Set(getInspectionWorkTypes(data));
+  const workTypesMarkup = INSPECTION_WORK_TYPES.map((workType) => `
+    <label class="inspection-work-option">
+      <input type="checkbox" value="${escapeHtml(workType)}" data-inspection-work-type${selectedWorkTypes.has(workType) ? " checked" : ""} />
+      <span>${escapeHtml(workType)}</span>
+    </label>
+  `).join("");
   card.innerHTML = `
     <button type="button" class="inspection-card-toggle" aria-expanded="${isOpen ? "true" : "false"}">
       <span>Огнетушитель № ${escapeHtml(number)}</span>
@@ -4656,6 +4712,11 @@ function createContractorInspectionCard(data, isOpen = false) {
           ${getSelectOptions(["Ежеквартальная", "Ежегодная"], getInspectionType({ inspectionType: data.checkType || inspectionTypeSelect.value }))}
         </select>
       </label>
+      <fieldset class="inspection-work-types">
+        <legend>Выполненные работы</legend>
+        <p>Можно выбрать несколько вариантов</p>
+        <div class="inspection-work-grid">${workTypesMarkup}</div>
+      </fieldset>
       <label class="inspection-field">
         <span>Результат проверки</span>
         <select data-inspection-result>
@@ -4755,6 +4816,7 @@ function addContractorInspectionCard() {
     comment: "",
     mass: details.mass,
     checkType: details.checkType,
+    workTypes: [],
     result: details.result,
   };
 
@@ -4801,6 +4863,7 @@ function collectContractorInspectionItems() {
       comment: getValue("[data-inspection-comment]"),
       mass: getValue("[data-inspection-mass]"),
       checkType: card.querySelector("[data-inspection-check-type]")?.value || inspectionTypeSelect.value,
+      workTypes: Array.from(card.querySelectorAll("[data-inspection-work-type]:checked")).map((input) => input.value),
       result: card.querySelector("[data-inspection-result]")?.value || "Годный к эксплуатации",
       decommissioned: card.dataset.decommissioned === "true",
     };

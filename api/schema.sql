@@ -220,6 +220,7 @@ CREATE TABLE inspection_items (
   post_recharge_result VARCHAR(255) NULL,
   mass VARCHAR(120) NULL,
   check_type VARCHAR(120) NULL,
+  work_types TEXT NULL,
   result VARCHAR(255) NULL,
   comment TEXT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

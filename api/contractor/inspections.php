@@ -142,13 +142,13 @@ try {
             inspection_id, extinguisher_id, number, place, name, manufacturer, release_date, factory_number,
             assigned_number, placement_date, manufacture_date, next_recharge_date, service_life, responsible_person,
             next_planned_test_date, recharge_date, otv_mark, post_recharge_result,
-            mass, check_type, result, comment
+            mass, check_type, work_types, result, comment
          )
          VALUES (
             :inspection_id, :extinguisher_id, :number, :place, :name, :manufacturer, :release_date, :factory_number,
             :assigned_number, :placement_date, :manufacture_date, :next_recharge_date, :service_life, :responsible_person,
             :next_planned_test_date, :recharge_date, :otv_mark, :post_recharge_result,
-            :mass, :check_type, :result, :comment
+            :mass, :check_type, :work_types, :result, :comment
          )'
     );
     $insertIssue = $pdo->prepare(
@@ -186,6 +186,10 @@ try {
         $otvMark = trim((string)(isset($item['otvMark']) ? $item['otvMark'] : ''));
         $postRechargeResult = trim((string)(isset($item['postRechargeResult']) ? $item['postRechargeResult'] : ''));
         $result = trim((string)(isset($item['result']) ? $item['result'] : ''));
+        $workTypes = isset($item['workTypes']) && is_array($item['workTypes']) ? $item['workTypes'] : [];
+        $workTypes = array_values(array_filter(array_map(function ($workType) {
+            return trim((string)$workType);
+        }, $workTypes)));
         $comment = trim((string)(isset($item['comment']) ? $item['comment'] : ''));
         $decommissioned = !empty($item['decommissioned']);
         $status = contractor_result_status($result, $decommissioned);
@@ -270,6 +274,7 @@ try {
                 'otvMark' => $otvMark,
                 'postRechargeResult' => $postRechargeResult,
                 'checkType' => trim((string)(isset($item['checkType']) ? $item['checkType'] : '')),
+                'workTypes' => $workTypes,
                 'inspectionType' => $inspectionType,
                 'result' => $result,
                 'comment' => $comment,
@@ -298,6 +303,7 @@ try {
             'post_recharge_result' => $postRechargeResult !== '' ? $postRechargeResult : null,
             'mass' => trim((string)(isset($item['mass']) ? $item['mass'] : '')) ?: null,
             'check_type' => trim((string)(isset($item['checkType']) ? $item['checkType'] : '')) ?: null,
+            'work_types' => count($workTypes) ? json_encode($workTypes, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
             'result' => $result !== '' ? $result : null,
             'comment' => $comment !== '' ? $comment : null,
         ]);
