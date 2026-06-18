@@ -8,16 +8,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $input = input_json();
 $role = isset($input['role']) ? (string)$input['role'] : 'organization';
-$visitorId = isset($input['visitorId']) ? (string)$input['visitorId'] : '';
+$visitorId = 'shared-test-object-contractor-20260618';
 
 if ($role !== 'organization' && $role !== 'contractor') {
     respond(422, ['error' => 'Role is invalid.']);
-}
-
-$visitorId = strtolower(preg_replace('/[^a-zA-Z0-9-]/', '', $visitorId));
-
-if (strlen($visitorId) < 16) {
-    $visitorId = random_token(16);
 }
 
 $visitorHash = substr(hash('sha256', $visitorId), 0, 24);
@@ -339,9 +333,7 @@ try {
     ensure_demo_contractor_profile($pdo, (int)$contractorUser['id'], $demoContractorName);
     ensure_demo_contractor_link($pdo, (int)$contractorUser['id'], $organizationId, $demoContractorName);
     prune_demo_contractor_links($pdo, (int)$contractorUser['id'], $organizationId);
-    if (!empty($demoOrganization['created'])) {
-        ensure_demo_stock_object($pdo, $organizationId);
-    }
+    ensure_demo_stock_object($pdo, $organizationId);
 
     $user = $role === 'organization' ? $organizationUser : $contractorUser;
     $userId = (int)$user['id'];
