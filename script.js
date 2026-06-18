@@ -2403,8 +2403,13 @@ function hideDecommissionModal() {
 }
 
 function showDeleteObjectModal() {
+  if (getAccountType() !== "organization") {
+    showSnackbar("Удалить объект может только организация");
+    return;
+  }
+
   const objectName = appState.currentObject?.object?.name || "этот объект";
-  deleteObjectModalText.textContent = `Объект «${objectName}» и все связанные данные будут удалены без возможности восстановления.`;
+  deleteObjectModalText.textContent = `Вы действительно хотите удалить объект «${objectName}»? Все огнетушители, проверки, неисправности и история объекта будут удалены без возможности восстановления.`;
   deleteObjectModal.classList.add("is-visible");
   deleteObjectModal.setAttribute("aria-hidden", "false");
 }
@@ -3198,6 +3203,12 @@ deleteObjectModal.addEventListener("click", (event) => {
 });
 
 deleteObjectConfirmButton.addEventListener("click", async () => {
+  if (getAccountType() !== "organization") {
+    hideDeleteObjectModal();
+    showSnackbar("Удалить объект может только организация");
+    return;
+  }
+
   const objectId = appState.currentObjectId;
 
   if (!objectId) {

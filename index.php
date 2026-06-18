@@ -624,7 +624,7 @@
         </div>
         <div class="modal-overlay" id="deleteObjectModal" aria-hidden="true">
           <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="deleteObjectModalTitle">
-            <h2 id="deleteObjectModalTitle">Удалить объект?</h2>
+            <h2 id="deleteObjectModalTitle">Вы уверены, что хотите удалить объект?</h2>
             <p id="deleteObjectModalText">Объект и все связанные данные будут удалены без возможности восстановления.</p>
             <div class="modal-actions">
               <button type="button" class="secondary-button" id="deleteObjectCancelButton">Отмена</button>
@@ -636,6 +636,6 @@
       </section>
     </main>
 
-    <script src="./script.js?v=20260618-5"></script>
+    <script src="./script.js?v=20260618-6"></script>
   </body>
 </html>
