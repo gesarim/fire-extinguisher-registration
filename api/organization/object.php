@@ -23,6 +23,18 @@ if (!$object) {
     respond(404, ['error' => 'Object not found.']);
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+    $delete = db()->prepare(
+        'DELETE FROM objects WHERE id = :id AND organization_id = :organization_id'
+    );
+    $delete->execute([
+        'id' => $objectId,
+        'organization_id' => $organization['id'],
+    ]);
+
+    respond(200, ['ok' => true]);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 $rooms = db()->prepare(
     'SELECT rooms.*,

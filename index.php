@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Регистрация | Учет огнетушителей</title>
-    <link rel="stylesheet" href="./styles.css?v=20260618-4" />
+    <link rel="stylesheet" href="./styles.css?v=20260618-5" />
   </head>
   <body>
     <main class="app-shell" aria-labelledby="page-title">
@@ -622,10 +622,20 @@
             </div>
           </div>
         </div>
+        <div class="modal-overlay" id="deleteObjectModal" aria-hidden="true">
+          <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="deleteObjectModalTitle">
+            <h2 id="deleteObjectModalTitle">Удалить объект?</h2>
+            <p id="deleteObjectModalText">Объект и все связанные данные будут удалены без возможности восстановления.</p>
+            <div class="modal-actions">
+              <button type="button" class="secondary-button" id="deleteObjectCancelButton">Отмена</button>
+              <button type="button" class="danger-button" id="deleteObjectConfirmButton">Удалить</button>
+            </div>
+          </div>
+        </div>
         <div class="snackbar" id="snackbar" role="status" aria-live="polite"></div>
       </section>
     </main>
 
-    <script src="./script.js?v=20260618-4"></script>
+    <script src="./script.js?v=20260618-5"></script>
   </body>
 </html>

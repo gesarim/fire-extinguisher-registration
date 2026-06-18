@@ -82,6 +82,10 @@ const inspectionModalClose = document.querySelector("#inspectionModalClose");
 const decommissionModal = document.querySelector("#decommissionModal");
 const decommissionCancelButton = document.querySelector("#decommissionCancelButton");
 const decommissionConfirmButton = document.querySelector("#decommissionConfirmButton");
+const deleteObjectModal = document.querySelector("#deleteObjectModal");
+const deleteObjectModalText = document.querySelector("#deleteObjectModalText");
+const deleteObjectCancelButton = document.querySelector("#deleteObjectCancelButton");
+const deleteObjectConfirmButton = document.querySelector("#deleteObjectConfirmButton");
 const photoUpload = document.querySelector("#photoUpload");
 const uploadPhotoButton = document.querySelector("#uploadPhotoButton");
 const addExtinguisherFormFields = document.querySelector("#addExtinguisherFormFields");
@@ -1481,6 +1485,13 @@ function renderObjectEditForm() {
         <button type="button" class="secondary-button" data-cancel-object-edit>Отменить</button>
         <button type="button" class="primary-button" data-save-object-edit>Сохранить</button>
       </div>
+      <section class="object-delete-zone">
+        <div>
+          <strong>Удаление объекта</strong>
+          <span>Будут удалены огнетушители, проверки, неисправности и история объекта.</span>
+        </div>
+        <button type="button" class="danger-button" data-delete-object>Удалить объект</button>
+      </section>
     </div>
   `;
 
@@ -2391,6 +2402,18 @@ function hideDecommissionModal() {
   decommissionModal.setAttribute("aria-hidden", "true");
 }
 
+function showDeleteObjectModal() {
+  const objectName = appState.currentObject?.object?.name || "этот объект";
+  deleteObjectModalText.textContent = `Объект «${objectName}» и все связанные данные будут удалены без возможности восстановления.`;
+  deleteObjectModal.classList.add("is-visible");
+  deleteObjectModal.setAttribute("aria-hidden", "false");
+}
+
+function hideDeleteObjectModal() {
+  deleteObjectModal.classList.remove("is-visible");
+  deleteObjectModal.setAttribute("aria-hidden", "true");
+}
+
 function createLocationRow(roomNumber, value = "", extinguisherCount = "") {
   const row = document.createElement("div");
   row.className = "location-row";
@@ -3164,6 +3187,47 @@ decommissionConfirmButton.addEventListener("click", () => {
   pendingDecommissionButton = null;
 });
 
+deleteObjectCancelButton.addEventListener("click", () => {
+  hideDeleteObjectModal();
+});
+
+deleteObjectModal.addEventListener("click", (event) => {
+  if (event.target === deleteObjectModal) {
+    hideDeleteObjectModal();
+  }
+});
+
+deleteObjectConfirmButton.addEventListener("click", async () => {
+  const objectId = appState.currentObjectId;
+
+  if (!objectId) {
+    hideDeleteObjectModal();
+    showSnackbar("Объект не выбран");
+    return;
+  }
+
+  deleteObjectConfirmButton.disabled = true;
+
+  try {
+    await apiRequest(`/organization/object.php?id=${encodeURIComponent(objectId)}`, {
+      method: "DELETE",
+    });
+    hideDeleteObjectModal();
+    appState.currentObjectId = null;
+    appState.currentObject = null;
+    appState.currentExtinguisher = null;
+    setObjectEditMode(false);
+    await loadDashboard();
+    await loadObjects();
+    showObjects();
+    showSnackbar("Объект удален");
+  } catch (error) {
+    showSnackbar(error.message);
+  } finally {
+    deleteObjectConfirmButton.disabled = false;
+  }
+});
+
 addExtinguisherButton.addEventListener("click", () => {
   openAddExtinguisher();
 });
@@ -3249,6 +3313,7 @@ objectEditPanel.addEventListener("click", async (event) => {
   const removeRoomButton = event.target.closest("[data-edit-remove-room]");
   const cancelButton = event.target.closest("[data-cancel-object-edit]");
   const saveButton = event.target.closest("[data-save-object-edit]");
+  const deleteButton = event.target.closest("[data-delete-object]");
 
   if (addRoomButton) {
     formElement.querySelector("[data-edit-room-list]").append(createObjectEditRoomCard());
@@ -3287,6 +3352,11 @@ objectEditPanel.addEventListener("click", async (event) => {
   if (cancelButton) {
     setObjectEditMode(false);
     showSnackbar("Изменения отменены");
+    return;
+  }
+
+  if (deleteButton) {
+    showDeleteObjectModal();
     return;
   }
 

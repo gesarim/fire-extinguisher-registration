@@ -80,7 +80,10 @@ function ensure_demo_organization($pdo, $ownerUserId, $organizationName)
             'name' => $organizationName,
         ]);
 
-        return (int)$organization['id'];
+        return [
+            'id' => (int)$organization['id'],
+            'created' => false,
+        ];
     }
 
     $insertOrganization = $pdo->prepare(
@@ -92,7 +95,10 @@ function ensure_demo_organization($pdo, $ownerUserId, $organizationName)
         'name' => $organizationName,
     ]);
 
-    return (int)$pdo->lastInsertId();
+    return [
+        'id' => (int)$pdo->lastInsertId(),
+        'created' => true,
+    ];
 }
 
 function ensure_demo_contractor_profile($pdo, $contractorUserId, $contractorName)
@@ -328,11 +334,14 @@ try {
 
     $organizationUser = upsert_demo_user($pdo, $demoOrganizationEmail, 'Демо владелец', 'organization');
     $contractorUser = upsert_demo_user($pdo, $demoContractorEmail, 'Демо проверяющий', 'contractor');
-    $organizationId = ensure_demo_organization($pdo, (int)$organizationUser['id'], $demoOrganizationName);
+    $demoOrganization = ensure_demo_organization($pdo, (int)$organizationUser['id'], $demoOrganizationName);
+    $organizationId = (int)$demoOrganization['id'];
     ensure_demo_contractor_profile($pdo, (int)$contractorUser['id'], $demoContractorName);
     ensure_demo_contractor_link($pdo, (int)$contractorUser['id'], $organizationId, $demoContractorName);
     prune_demo_contractor_links($pdo, (int)$contractorUser['id'], $organizationId);
-    ensure_demo_stock_object($pdo, $organizationId);
+    if (!empty($demoOrganization['created'])) {
+        ensure_demo_stock_object($pdo, $organizationId);
+    }
 
     $user = $role === 'organization' ? $organizationUser : $contractorUser;
     $userId = (int)$user['id'];
