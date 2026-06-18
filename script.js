@@ -3797,7 +3797,11 @@ function getExtinguisherHistory(extinguisher) {
       at: event.event_at || event.created_at || "",
       actor: event.actor_name || "Не указано",
       actorRole: event.actor_role || "",
-      details: [details.result || details.title || details.place || "", details.comment || ""].filter(Boolean).join(" · "),
+      details: [
+        details.result || details.title || details.place || "",
+        getInspectionWorkTypes(details).join("; "),
+        details.comment || "",
+      ].filter(Boolean).join(" · "),
       source: "Журнал событий",
     });
   });
