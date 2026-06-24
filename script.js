@@ -2050,6 +2050,12 @@ function showObjectStep(step) {
 
 function showMenu(returnView = "dashboard") {
   menuReturnView = returnView;
+
+  if (window.matchMedia("(min-width: 900px)").matches) {
+    menuButton.setAttribute("aria-expanded", "false");
+    return;
+  }
+
   dashboardScreen.classList.remove("is-active");
   summaryScreen.classList.remove("is-active");
   accountScreen.classList.remove("is-active");

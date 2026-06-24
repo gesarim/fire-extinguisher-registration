@@ -2546,6 +2546,247 @@ button:focus-visible {
   transform: translateY(0);
 }
 
+@media (min-width: 900px) {
+  :root {
+    --desktop-sidebar: 248px;
+    --desktop-gap: 24px;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.08), transparent 34%),
+      var(--page);
+  }
+
+  .app-shell {
+    align-items: stretch;
+    justify-items: center;
+    padding: 24px;
+  }
+
+  .phone-frame {
+    width: min(100%, 1240px);
+    min-height: calc(100dvh - 48px);
+    border-radius: 28px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.24);
+  }
+
+  .registration-form,
+  .app-header,
+  .stepper {
+    width: min(100%, 520px);
+    margin-inline: auto;
+  }
+
+  .app-header {
+    padding-top: 48px;
+  }
+
+  .phone-frame:has(.dashboard-screen.is-active) .menu-screen,
+  .phone-frame:has(.summary-screen.is-active) .menu-screen,
+  .phone-frame:has(.account-screen.is-active) .menu-screen,
+  .phone-frame:has(.objects-screen.is-active) .menu-screen,
+  .phone-frame:has(.object-summary-screen.is-active) .menu-screen,
+  .phone-frame:has(.extinguisher-detail-screen.is-active) .menu-screen,
+  .phone-frame:has(.check-detail-screen.is-active) .menu-screen,
+  .phone-frame:has(.add-extinguisher-screen.is-active) .menu-screen,
+  .phone-frame:has(.add-issue-screen.is-active) .menu-screen,
+  .phone-frame:has(.contractor-employee-select-screen.is-active) .menu-screen,
+  .phone-frame:has(.object-flow.is-active) .menu-screen {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 5;
+    width: var(--desktop-sidebar);
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #ececef;
+    background: #fafafa;
+    padding: 28px 18px;
+  }
+
+  .phone-frame:has(.dashboard-screen.is-active) > .dashboard-screen,
+  .phone-frame:has(.summary-screen.is-active) > .summary-screen,
+  .phone-frame:has(.account-screen.is-active) > .account-screen,
+  .phone-frame:has(.objects-screen.is-active) > .objects-screen,
+  .phone-frame:has(.object-summary-screen.is-active) > .object-summary-screen,
+  .phone-frame:has(.extinguisher-detail-screen.is-active) > .extinguisher-detail-screen,
+  .phone-frame:has(.check-detail-screen.is-active) > .check-detail-screen,
+  .phone-frame:has(.add-extinguisher-screen.is-active) > .add-extinguisher-screen,
+  .phone-frame:has(.add-issue-screen.is-active) > .add-issue-screen,
+  .phone-frame:has(.contractor-employee-select-screen.is-active) > .contractor-employee-select-screen,
+  .phone-frame:has(.object-flow.is-active) > .object-flow {
+    width: calc(100% - var(--desktop-sidebar));
+    min-height: calc(100dvh - 48px);
+    margin-left: var(--desktop-sidebar);
+    padding: 28px;
+    overflow: auto;
+  }
+
+  .menu-topbar {
+    min-height: auto;
+    display: block;
+  }
+
+  .menu-topbar .flow-icon-button,
+  .menu-topbar .icon-button {
+    display: none;
+  }
+
+  .menu-title {
+    color: var(--text);
+    font-size: 20px;
+    font-weight: 650;
+    line-height: 1.25;
+    text-align: left;
+  }
+
+  .menu-title::before {
+    content: "";
+    width: 40px;
+    height: 40px;
+    display: block;
+    margin-bottom: 18px;
+    border-radius: var(--radius);
+    background:
+      linear-gradient(#1d1d1f, #1d1d1f) 50% 38% / 18px 2px no-repeat,
+      linear-gradient(#1d1d1f, #1d1d1f) 50% 50% / 18px 2px no-repeat,
+      linear-gradient(#1d1d1f, #1d1d1f) 50% 62% / 18px 2px no-repeat,
+      var(--control);
+  }
+
+  .menu-list {
+    gap: 6px;
+    margin-top: 28px;
+  }
+
+  .menu-list button,
+  .menu-logout {
+    min-height: 46px;
+    border-radius: var(--radius);
+    padding: 0 14px;
+    transition: background-color 180ms ease, color 180ms ease;
+  }
+
+  .menu-list button:hover,
+  .menu-list button:focus-visible,
+  .menu-logout:hover,
+  .menu-logout:focus-visible {
+    outline: none;
+    background: var(--control);
+  }
+
+  .menu-logout {
+    margin-top: auto;
+    color: #6c2020;
+  }
+
+  .menu-wrap,
+  .flow-icon-button[aria-label="Открыть меню"] {
+    display: none;
+  }
+
+  .dashboard-topbar,
+  .flow-topbar {
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+  }
+
+  .flow-step-label {
+    color: var(--text);
+    font-size: 22px;
+    font-weight: 650;
+    line-height: 1.25;
+    text-align: left;
+  }
+
+  .dashboard-screen.is-contractor .dashboard-topbar {
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+  }
+
+  .dashboard-content,
+  .account-content,
+  .objects-list,
+  .inspection-select-content,
+  .inspection-list {
+    width: min(100%, 900px);
+  }
+
+  .dashboard-content {
+    gap: 24px;
+    margin-top: 28px;
+  }
+
+  .dashboard-screen .dashboard-content:not(.is-hidden) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .dashboard-objects-section,
+  .checks-section,
+  .summary-section,
+  .account-section,
+  .object-detail-section,
+  .object-edit-panel,
+  .contractor-object-card,
+  .inspection-card-toggle,
+  .inspection-form {
+    border-radius: 18px;
+  }
+
+  .dashboard-screen .add-project-button,
+  .objects-bottom-bar,
+  .contractor-inspection-footer,
+  .button-row,
+  .extinguisher-save-button,
+  .form-step > .primary-button,
+  .success-state > .primary-button,
+  .object-step > .primary-button,
+  .download-report-button {
+    position: static;
+  }
+
+  .add-project-button,
+  .contractor-inspection-footer {
+    width: min(100%, 420px);
+  }
+
+  .metric-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .summary-tabs {
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+
+  .extinguisher-table,
+  .check-detail-list,
+  .history-list,
+  .objects-list {
+    gap: 12px;
+  }
+
+  .extinguisher-line {
+    grid-template-columns: minmax(0, 1fr) max-content 24px;
+    padding: 18px 20px;
+  }
+
+  .extinguisher-card-main {
+    grid-template-columns: auto minmax(180px, 0.7fr) minmax(220px, 1fr);
+    align-items: center;
+    gap: 12px 18px;
+  }
+
+  .extinguisher-card-place {
+    grid-column: auto;
+    margin-top: 0;
+  }
+
+  .extinguisher-status {
+    white-space: nowrap;
+  }
+}
+
 @media (max-width: 430px) {
   .app-shell {
     padding: 0;
