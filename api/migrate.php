@@ -6,6 +6,10 @@ if (!isset($_GET['token']) || $_GET['token'] !== 'migrate-fire-2026') {
     respond(403, ['error' => 'Forbidden.']);
 }
 
+if (method_exists(db(), 'isSqlite') && db()->isSqlite()) {
+    respond(200, ['ok' => true, 'driver' => 'sqlite']);
+}
+
 $queries = [
     'CREATE TABLE IF NOT EXISTS contractor_invites (
       id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

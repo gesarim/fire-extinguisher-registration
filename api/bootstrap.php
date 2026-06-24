@@ -10,6 +10,111 @@ if (!file_exists($configPath)) {
 
 $config = require $configPath;
 
+class FireDb
+{
+    private $pdo;
+    private $driver;
+
+    public function __construct(PDO $pdo, $driver)
+    {
+        $this->pdo = $pdo;
+        $this->driver = $driver;
+    }
+
+    public function prepare($query, $options = [])
+    {
+        return $this->pdo->prepare($this->translate($query), $options);
+    }
+
+    public function query($query)
+    {
+        return $this->pdo->query($this->translate($query));
+    }
+
+    public function exec($query)
+    {
+        return $this->pdo->exec($this->translate($query));
+    }
+
+    public function beginTransaction()
+    {
+        return $this->pdo->beginTransaction();
+    }
+
+    public function commit()
+    {
+        return $this->pdo->commit();
+    }
+
+    public function rollBack()
+    {
+        return $this->pdo->rollBack();
+    }
+
+    public function lastInsertId()
+    {
+        return $this->pdo->lastInsertId();
+    }
+
+    public function getPdo()
+    {
+        return $this->pdo;
+    }
+
+    public function isSqlite()
+    {
+        return $this->driver === 'sqlite';
+    }
+
+    private function translate($query)
+    {
+        if ($this->driver !== 'sqlite') {
+            return $query;
+        }
+
+        $query = preg_replace('/SELECT\s+GET_LOCK\([^)]+\)\s+AS\s+lock_status/i', 'SELECT 1 AS lock_status WHERE :lock_name IS NULL OR :lock_name IS NOT NULL', $query);
+        $query = preg_replace('/SELECT\s+RELEASE_LOCK\([^)]+\)/i', 'SELECT 1 WHERE :lock_name IS NULL OR :lock_name IS NOT NULL', $query);
+        $query = preg_replace_callback('/DATE_ADD\s*\(\s*NOW\s*\(\s*\)\s*,\s*INTERVAL\s+(\d+)\s+(DAY|MINUTE)\s*\)/i', function ($matches) {
+            $unit = strtoupper($matches[2]) === 'DAY' ? 'days' : 'minutes';
+            return 'datetime("now", "+' . (int)$matches[1] . ' ' . $unit . '")';
+        }, $query);
+        $query = preg_replace('/\bNOW\s*\(\s*\)/i', 'datetime("now")', $query);
+
+        $query = str_replace(
+            'ON DUPLICATE KEY UPDATE invite_id = VALUES(invite_id), contractor_name = VALUES(contractor_name), status = "active"',
+            'ON CONFLICT(contractor_user_id, organization_id) DO UPDATE SET invite_id = excluded.invite_id, contractor_name = excluded.contractor_name, status = "active"',
+            $query
+        );
+        $query = str_replace(
+            'ON DUPLICATE KEY UPDATE contractor_name = VALUES(contractor_name), status = "active"',
+            'ON CONFLICT(contractor_user_id, organization_id) DO UPDATE SET contractor_name = excluded.contractor_name, status = "active"',
+            $query
+        );
+        $query = str_replace(
+            'ON DUPLICATE KEY UPDATE
+           employee_name = VALUES(employee_name),
+           payload = VALUES(payload),
+           updated_at = NOW()',
+            'ON CONFLICT(contractor_user_id, object_id) DO UPDATE SET
+           employee_name = excluded.employee_name,
+           payload = excluded.payload,
+           updated_at = datetime("now")',
+            $query
+        );
+        $query = str_replace(
+            'DELETE rooms FROM rooms
+             LEFT JOIN extinguishers ON extinguishers.room_id = rooms.id
+             WHERE rooms.id = :id AND rooms.object_id = :object_id AND extinguishers.id IS NULL',
+            'DELETE FROM rooms
+             WHERE id = :id AND object_id = :object_id
+               AND NOT EXISTS (SELECT 1 FROM extinguishers WHERE extinguishers.room_id = rooms.id)',
+            $query
+        );
+
+        return $query;
+    }
+}
+
 function respond($status, array $payload)
 {
     http_response_code($status);
@@ -36,31 +141,296 @@ function input_json()
 
 function db()
 {
-    static $pdo = null;
+    static $database = null;
     global $config;
 
-    if ($pdo instanceof PDO) {
-        return $pdo;
+    if ($database instanceof FireDb) {
+        return $database;
     }
 
     $db = $config['db'];
-    $dsn = sprintf(
-        'mysql:host=%s;dbname=%s;charset=%s',
-        $db['host'],
-        $db['name'],
-        isset($db['charset']) ? $db['charset'] : 'utf8mb4'
-    );
+    $driver = isset($db['driver']) ? $db['driver'] : 'mysql';
+
+    if ($driver === 'sqlite') {
+        $path = $db['path'];
+        $directory = dirname($path);
+
+        if (!is_dir($directory)) {
+            mkdir($directory, 0700, true);
+        }
+
+        $dsn = 'sqlite:' . $path;
+    } else {
+        $dsn = sprintf(
+            'mysql:host=%s;dbname=%s;charset=%s',
+            $db['host'],
+            $db['name'],
+            isset($db['charset']) ? $db['charset'] : 'utf8mb4'
+        );
+    }
 
     try {
         $pdo = new PDO($dsn, $db['user'], $db['password'], [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
+
+        if ($driver === 'sqlite') {
+            $pdo->exec('PRAGMA foreign_keys = ON');
+            ensure_sqlite_schema($pdo);
+        }
+
+        $database = new FireDb($pdo, $driver);
     } catch (Exception $error) {
         respond(500, ['error' => 'Database connection failed.']);
     }
 
-    return $pdo;
+    return $database;
+}
+
+function ensure_sqlite_schema(PDO $pdo)
+{
+    static $ensured = false;
+
+    if ($ensured) {
+        return;
+    }
+
+    $queries = [
+        'CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          email TEXT NOT NULL UNIQUE,
+          full_name TEXT NULL,
+          role TEXT NOT NULL,
+          email_verified_at TEXT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )',
+        'CREATE TABLE IF NOT EXISTS email_codes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          email TEXT NOT NULL,
+          code_hash TEXT NOT NULL,
+          purpose TEXT NOT NULL,
+          payload TEXT NULL,
+          expires_at TEXT NOT NULL,
+          used_at TEXT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )',
+        'CREATE INDEX IF NOT EXISTS email_codes_email_created_at ON email_codes (email, created_at)',
+        'CREATE TABLE IF NOT EXISTS sessions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          token_hash TEXT NOT NULL UNIQUE,
+          expires_at TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )',
+        'CREATE TABLE IF NOT EXISTS organizations (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          owner_user_id INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE CASCADE
+        )',
+        'CREATE TABLE IF NOT EXISTS organization_members (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          organization_id INTEGER NOT NULL,
+          full_name TEXT NOT NULL,
+          email TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )',
+        'CREATE TABLE IF NOT EXISTS contractor_invites (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          organization_id INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT "sent",
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )',
+        'CREATE TABLE IF NOT EXISTS contractor_profiles (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL UNIQUE,
+          name TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )',
+        'CREATE TABLE IF NOT EXISTS contractor_links (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          contractor_user_id INTEGER NOT NULL,
+          organization_id INTEGER NOT NULL,
+          invite_id INTEGER NULL,
+          contractor_name TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT "active",
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE (contractor_user_id, organization_id),
+          FOREIGN KEY (contractor_user_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+          FOREIGN KEY (invite_id) REFERENCES contractor_invites(id) ON DELETE SET NULL
+        )',
+        'CREATE TABLE IF NOT EXISTS objects (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          organization_id INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          address TEXT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )',
+        'CREATE TABLE IF NOT EXISTS rooms (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          object_id INTEGER NOT NULL,
+          building_name TEXT NULL,
+          floor_name TEXT NULL,
+          name TEXT NOT NULL,
+          fire_zone TEXT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (object_id) REFERENCES objects(id) ON DELETE CASCADE
+        )',
+        'CREATE TABLE IF NOT EXISTS files (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          organization_id INTEGER NOT NULL,
+          object_id INTEGER NULL,
+          name TEXT NOT NULL,
+          path TEXT NOT NULL,
+          mime_type TEXT NULL,
+          size_bytes INTEGER NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+          FOREIGN KEY (object_id) REFERENCES objects(id) ON DELETE SET NULL
+        )',
+        'CREATE TABLE IF NOT EXISTS extinguishers (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          organization_id INTEGER NOT NULL,
+          object_id INTEGER NOT NULL,
+          room_id INTEGER NULL,
+          number TEXT NOT NULL,
+          name TEXT NULL,
+          type_mark TEXT NULL,
+          manufacturer TEXT NULL,
+          factory_number TEXT NULL,
+          placement_date TEXT NULL,
+          manufacture_date TEXT NULL,
+          next_recharge_date TEXT NULL,
+          service_life TEXT NULL,
+          responsible_person TEXT NULL,
+          status TEXT NOT NULL DEFAULT "ok",
+          photo_file_id INTEGER NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+          FOREIGN KEY (object_id) REFERENCES objects(id) ON DELETE CASCADE,
+          FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE SET NULL,
+          FOREIGN KEY (photo_file_id) REFERENCES files(id) ON DELETE SET NULL
+        )',
+        'CREATE TABLE IF NOT EXISTS issues (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          organization_id INTEGER NOT NULL,
+          object_id INTEGER NOT NULL,
+          extinguisher_id INTEGER NULL,
+          title TEXT NOT NULL,
+          comment TEXT NULL,
+          status TEXT NOT NULL DEFAULT "open",
+          photo_file_id INTEGER NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+          FOREIGN KEY (object_id) REFERENCES objects(id) ON DELETE CASCADE,
+          FOREIGN KEY (extinguisher_id) REFERENCES extinguishers(id) ON DELETE SET NULL,
+          FOREIGN KEY (photo_file_id) REFERENCES files(id) ON DELETE SET NULL
+        )',
+        'CREATE TABLE IF NOT EXISTS extinguisher_events (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          organization_id INTEGER NOT NULL,
+          object_id INTEGER NOT NULL,
+          extinguisher_id INTEGER NULL,
+          event_type TEXT NOT NULL,
+          title TEXT NOT NULL,
+          actor_name TEXT NULL,
+          actor_role TEXT NULL,
+          event_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          details TEXT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+          FOREIGN KEY (object_id) REFERENCES objects(id) ON DELETE CASCADE,
+          FOREIGN KEY (extinguisher_id) REFERENCES extinguishers(id) ON DELETE SET NULL
+        )',
+        'CREATE INDEX IF NOT EXISTS extinguisher_events_extinguisher ON extinguisher_events (organization_id, object_id, extinguisher_id, event_at)',
+        'CREATE TABLE IF NOT EXISTS inspection_requests (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          organization_id INTEGER NOT NULL,
+          object_id INTEGER NOT NULL,
+          status TEXT NOT NULL DEFAULT "new",
+          preferred_date TEXT NULL,
+          comment TEXT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+          FOREIGN KEY (object_id) REFERENCES objects(id) ON DELETE CASCADE
+        )',
+        'CREATE TABLE IF NOT EXISTS inspections (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          organization_id INTEGER NOT NULL,
+          object_id INTEGER NOT NULL,
+          contractor_user_id INTEGER NULL,
+          contractor_name TEXT NULL,
+          employee_name TEXT NULL,
+          inspection_type TEXT NULL,
+          title TEXT NOT NULL,
+          planned_at TEXT NULL,
+          completed_at TEXT NULL,
+          report_file_id INTEGER NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+          FOREIGN KEY (object_id) REFERENCES objects(id) ON DELETE CASCADE,
+          FOREIGN KEY (contractor_user_id) REFERENCES users(id) ON DELETE SET NULL,
+          FOREIGN KEY (report_file_id) REFERENCES files(id) ON DELETE SET NULL
+        )',
+        'CREATE TABLE IF NOT EXISTS inspection_items (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          inspection_id INTEGER NOT NULL,
+          extinguisher_id INTEGER NULL,
+          number TEXT NOT NULL,
+          place TEXT NULL,
+          name TEXT NULL,
+          manufacturer TEXT NULL,
+          release_date TEXT NULL,
+          factory_number TEXT NULL,
+          assigned_number TEXT NULL,
+          placement_date TEXT NULL,
+          manufacture_date TEXT NULL,
+          next_recharge_date TEXT NULL,
+          service_life TEXT NULL,
+          responsible_person TEXT NULL,
+          next_planned_test_date TEXT NULL,
+          recharge_date TEXT NULL,
+          otv_mark TEXT NULL,
+          post_recharge_result TEXT NULL,
+          mass TEXT NULL,
+          check_type TEXT NULL,
+          work_types TEXT NULL,
+          result TEXT NULL,
+          comment TEXT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (inspection_id) REFERENCES inspections(id) ON DELETE CASCADE,
+          FOREIGN KEY (extinguisher_id) REFERENCES extinguishers(id) ON DELETE SET NULL
+        )',
+        'CREATE TABLE IF NOT EXISTS contractor_inspection_drafts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          contractor_user_id INTEGER NOT NULL,
+          organization_id INTEGER NOT NULL,
+          object_id INTEGER NOT NULL,
+          employee_name TEXT NULL,
+          payload TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE (contractor_user_id, object_id),
+          FOREIGN KEY (contractor_user_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+          FOREIGN KEY (object_id) REFERENCES objects(id) ON DELETE CASCADE
+        )',
+    ];
+
+    foreach ($queries as $query) {
+        $pdo->exec($query);
+    }
+
+    $ensured = true;
 }
 
 function require_user()
