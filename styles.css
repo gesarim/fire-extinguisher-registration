@@ -2642,17 +2642,7 @@ button:focus-visible {
   }
 
   .menu-title::before {
-    content: "";
-    width: 40px;
-    height: 40px;
-    display: block;
-    margin-bottom: 18px;
-    border-radius: var(--radius);
-    background:
-      linear-gradient(#1d1d1f, #1d1d1f) 50% 38% / 18px 2px no-repeat,
-      linear-gradient(#1d1d1f, #1d1d1f) 50% 50% / 18px 2px no-repeat,
-      linear-gradient(#1d1d1f, #1d1d1f) 50% 62% / 18px 2px no-repeat,
-      var(--control);
+    content: none;
   }
 
   .menu-list {
