@@ -92,9 +92,22 @@ class FireDb
         );
         $query = str_replace(
             'ON DUPLICATE KEY UPDATE
+           organization_id = VALUES(organization_id),
            employee_name = VALUES(employee_name),
            payload = VALUES(payload),
-           updated_at = NOW()',
+           updated_at = datetime("now")',
+            'ON CONFLICT(contractor_user_id, object_id) DO UPDATE SET
+           organization_id = excluded.organization_id,
+           employee_name = excluded.employee_name,
+           payload = excluded.payload,
+           updated_at = datetime("now")',
+            $query
+        );
+        $query = str_replace(
+            'ON DUPLICATE KEY UPDATE
+           employee_name = VALUES(employee_name),
+           payload = VALUES(payload),
+           updated_at = datetime("now")',
             'ON CONFLICT(contractor_user_id, object_id) DO UPDATE SET
            employee_name = excluded.employee_name,
            payload = excluded.payload,

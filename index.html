@@ -38,13 +38,13 @@
               <label class="role-card">
                 <input type="radio" name="accountType" value="organization" checked />
                 <span class="role-title">Организация</span>
-                <span class="role-text">Демо-кабинет компании с отдельными данными для этого браузера.</span>
+                <span class="role-text">Общий демо-кабинет компании с объектом «СКЛАД».</span>
               </label>
 
               <label class="role-card">
                 <input type="radio" name="accountType" value="contractor" />
                 <span class="role-title">Подрядчик</span>
-                <span class="role-text">Демо-кабинет исполнителя с отдельными данными для этого браузера.</span>
+                <span class="role-text">Общий демо-кабинет подрядчика с объектом «СКЛАД».</span>
               </label>
             </div>
 
@@ -97,7 +97,7 @@
             </div>
             <p class="field-error" id="codeError">Введите все 6 цифр из письма.</p>
 
-            <button type="button" class="text-button">Отправить код повторно</button>
+            <button type="button" class="text-button" id="resendCodeButton">Отправить код повторно</button>
 
             <div class="button-row">
               <button type="button" class="secondary-button" data-prev>Назад</button>
@@ -643,6 +643,6 @@
       </section>
     </main>
 
-    <script src="./script.js?v=20260624-desktop-1"></script>
+    <script src="./script.js?v=20260629-health-2"></script>
   </body>
 </html>

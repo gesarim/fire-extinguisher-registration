@@ -114,6 +114,7 @@ const successText = document.querySelector("#successText");
 const codeInputs = Array.from(document.querySelectorAll(".code-input"));
 const codeGrid = document.querySelector(".code-grid");
 const codeError = document.querySelector("#codeError");
+const resendCodeButton = document.querySelector("#resendCodeButton");
 const accountTypeInputs = Array.from(document.querySelectorAll("input[name='accountType']"));
 const roleCards = Array.from(document.querySelectorAll(".role-card"));
 const demoEnterButton = document.querySelector("[data-demo-enter]");
@@ -2733,6 +2734,21 @@ codeInputs.forEach((input, index) => {
   });
 });
 
+if (resendCodeButton) {
+  resendCodeButton.addEventListener("click", async () => {
+    resendCodeButton.disabled = true;
+
+    try {
+      await requestAuthCode();
+      showSnackbar("Новый код отправлен на email");
+    } catch (error) {
+      showSnackbar(error.message);
+    } finally {
+      resendCodeButton.disabled = false;
+    }
+  });
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -3789,6 +3805,7 @@ function matchesExtinguisherHistoryItem(extinguisher, item) {
 function getExtinguisherHistory(extinguisher) {
   const source = appState.currentObject || {};
   const history = [];
+  const inspectionEventIds = new Set();
   const eventRows = (source.extinguisherEvents || []).filter((event) => {
     const eventExtinguisherId = String(event.extinguisher_id || event.extinguisherId || "");
     return eventExtinguisherId && eventExtinguisherId === String(extinguisher.id || "");
@@ -3796,6 +3813,14 @@ function getExtinguisherHistory(extinguisher) {
 
   eventRows.forEach((event) => {
     const details = parseEventDetails(event.details);
+    const inspectionId = String(details.inspectionId || "");
+    const inspectionLabel = details.checkType || details.inspectionType || "";
+    const eventResult = details.result || details.title || details.place || "";
+
+    if (inspectionId) {
+      inspectionEventIds.add(inspectionId);
+    }
+
     history.push({
       type: event.event_type || "event",
       title: event.title || "Событие",
@@ -3803,7 +3828,7 @@ function getExtinguisherHistory(extinguisher) {
       actor: event.actor_name || "Не указано",
       actorRole: event.actor_role || "",
       details: [
-        details.result || details.title || details.place || "",
+        inspectionLabel && eventResult ? `${inspectionLabel} · ${eventResult}` : eventResult,
         getInspectionWorkTypes(details).join("; "),
         details.comment || "",
       ].filter(Boolean).join(" · "),
@@ -3824,6 +3849,10 @@ function getExtinguisherHistory(extinguisher) {
   }
 
   (source.inspections || []).forEach((inspection) => {
+    if (inspectionEventIds.has(String(inspection.id || ""))) {
+      return;
+    }
+
     (inspection.items || [])
       .filter((item) => matchesExtinguisherHistoryItem(extinguisher, item))
       .forEach((item) => {
