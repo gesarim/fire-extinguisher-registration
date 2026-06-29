@@ -26,6 +26,7 @@ $manufactureDate = trim((string)(isset($input['manufactureDate']) ? $input['manu
 $nextRechargeDate = trim((string)(isset($input['nextRechargeDate']) ? $input['nextRechargeDate'] : ''));
 $serviceLife = trim((string)(isset($input['serviceLife']) ? $input['serviceLife'] : ''));
 $responsiblePerson = trim((string)(isset($input['responsiblePerson']) ? $input['responsiblePerson'] : ''));
+$photoFileId = (int)(isset($input['photoFileId']) ? $input['photoFileId'] : 0);
 
 if ($objectId <= 0 || $number === '') {
     respond(422, ['error' => 'Object and extinguisher number are required.']);
@@ -37,6 +38,8 @@ $objectCheck->execute(['id' => $objectId, 'organization_id' => $organization['id
 if (!$objectCheck->fetch()) {
     respond(404, ['error' => 'Object not found.']);
 }
+
+require_scoped_file($photoFileId, $organization['id'], $objectId, true);
 
 $resolvedRoomId = $roomId > 0 ? $roomId : null;
 
@@ -137,11 +140,11 @@ if ($resolvedRoomId === null && $manualPlace !== '') {
 $statement = db()->prepare(
     'INSERT INTO extinguishers (
         organization_id, object_id, room_id, number, name, type_mark, manufacturer, factory_number,
-        placement_date, manufacture_date, next_recharge_date, service_life, responsible_person, status
+        placement_date, manufacture_date, next_recharge_date, service_life, responsible_person, status, photo_file_id
      )
      VALUES (
         :organization_id, :object_id, :room_id, :number, :name, :type_mark, :manufacturer, :factory_number,
-        :placement_date, :manufacture_date, :next_recharge_date, :service_life, :responsible_person, "ok"
+        :placement_date, :manufacture_date, :next_recharge_date, :service_life, :responsible_person, "ok", :photo_file_id
      )'
 );
 $statement->execute([
@@ -158,6 +161,7 @@ $statement->execute([
     'next_recharge_date' => $nextRechargeDate !== '' ? $nextRechargeDate : null,
     'service_life' => $serviceLife !== '' ? $serviceLife : null,
     'responsible_person' => $responsiblePerson !== '' ? $responsiblePerson : null,
+    'photo_file_id' => $photoFileId > 0 ? $photoFileId : null,
 ]);
 $extinguisherId = (int)db()->lastInsertId();
 
@@ -186,6 +190,7 @@ $event->execute([
         'nextRechargeDate' => $nextRechargeDate,
         'serviceLife' => $serviceLife,
         'responsiblePerson' => $responsiblePerson,
+        'photoFileId' => $photoFileId > 0 ? $photoFileId : null,
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
 ]);
 

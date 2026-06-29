@@ -63,9 +63,12 @@ $queries = [
       check_type VARCHAR(120) NULL,
       work_types TEXT NULL,
       result VARCHAR(255) NULL,
+      comment TEXT NULL,
+      photo_file_id BIGINT UNSIGNED NULL,
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (inspection_id) REFERENCES inspections(id) ON DELETE CASCADE,
-      FOREIGN KEY (extinguisher_id) REFERENCES extinguishers(id) ON DELETE SET NULL
+      FOREIGN KEY (extinguisher_id) REFERENCES extinguishers(id) ON DELETE SET NULL,
+      FOREIGN KEY (photo_file_id) REFERENCES files(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
     'CREATE TABLE IF NOT EXISTS contractor_inspection_drafts (
       id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -126,6 +129,7 @@ add_column_if_missing('inspections', 'contractor_user_id', 'BIGINT UNSIGNED NULL
 add_column_if_missing('inspections', 'contractor_name', 'VARCHAR(255) NULL');
 add_column_if_missing('inspections', 'employee_name', 'VARCHAR(255) NULL');
 add_column_if_missing('inspections', 'inspection_type', 'VARCHAR(80) NULL');
+add_column_if_missing('files', 'uploaded_by_user_id', 'BIGINT UNSIGNED NULL');
 add_column_if_missing('extinguishers', 'type_mark', 'VARCHAR(255) NULL');
 add_column_if_missing('extinguishers', 'manufacturer', 'VARCHAR(255) NULL');
 add_column_if_missing('extinguishers', 'factory_number', 'VARCHAR(120) NULL');
@@ -134,6 +138,7 @@ add_column_if_missing('extinguishers', 'manufacture_date', 'VARCHAR(120) NULL');
 add_column_if_missing('extinguishers', 'next_recharge_date', 'VARCHAR(120) NULL');
 add_column_if_missing('extinguishers', 'service_life', 'VARCHAR(120) NULL');
 add_column_if_missing('extinguishers', 'responsible_person', 'VARCHAR(255) NULL');
+add_column_if_missing('extinguishers', 'photo_file_id', 'BIGINT UNSIGNED NULL');
 add_column_if_missing('inspection_items', 'placement_date', 'VARCHAR(120) NULL');
 add_column_if_missing('inspection_items', 'manufacture_date', 'VARCHAR(120) NULL');
 add_column_if_missing('inspection_items', 'next_recharge_date', 'VARCHAR(120) NULL');
@@ -145,7 +150,9 @@ add_column_if_missing('inspection_items', 'otv_mark', 'VARCHAR(255) NULL');
 add_column_if_missing('inspection_items', 'post_recharge_result', 'VARCHAR(255) NULL');
 add_column_if_missing('inspection_items', 'comment', 'TEXT NULL');
 add_column_if_missing('inspection_items', 'work_types', 'TEXT NULL');
+add_column_if_missing('inspection_items', 'photo_file_id', 'BIGINT UNSIGNED NULL');
 add_column_if_missing('issues', 'comment', 'TEXT NULL');
+add_column_if_missing('issues', 'photo_file_id', 'BIGINT UNSIGNED NULL');
 
 db()->exec('ALTER TABLE extinguishers MODIFY status ENUM("ok", "needs_check", "broken", "decommissioned") NOT NULL DEFAULT "ok"');
 

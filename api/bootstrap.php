@@ -306,9 +306,11 @@ function ensure_sqlite_schema(PDO $pdo)
           path TEXT NOT NULL,
           mime_type TEXT NULL,
           size_bytes INTEGER NULL,
+          uploaded_by_user_id INTEGER NULL,
           created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-          FOREIGN KEY (object_id) REFERENCES objects(id) ON DELETE SET NULL
+          FOREIGN KEY (object_id) REFERENCES objects(id) ON DELETE SET NULL,
+          FOREIGN KEY (uploaded_by_user_id) REFERENCES users(id) ON DELETE SET NULL
         )',
         'CREATE TABLE IF NOT EXISTS extinguishers (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -419,9 +421,11 @@ function ensure_sqlite_schema(PDO $pdo)
           work_types TEXT NULL,
           result TEXT NULL,
           comment TEXT NULL,
+          photo_file_id INTEGER NULL,
           created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (inspection_id) REFERENCES inspections(id) ON DELETE CASCADE,
-          FOREIGN KEY (extinguisher_id) REFERENCES extinguishers(id) ON DELETE SET NULL
+          FOREIGN KEY (extinguisher_id) REFERENCES extinguishers(id) ON DELETE SET NULL,
+          FOREIGN KEY (photo_file_id) REFERENCES files(id) ON DELETE SET NULL
         )',
         'CREATE TABLE IF NOT EXISTS contractor_inspection_drafts (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -441,6 +445,24 @@ function ensure_sqlite_schema(PDO $pdo)
 
     foreach ($queries as $query) {
         $pdo->exec($query);
+    }
+
+    $inspectionItemColumns = $pdo->query('PRAGMA table_info(inspection_items)')->fetchAll(PDO::FETCH_ASSOC);
+    $inspectionItemColumnNames = array_map(function ($column) {
+        return $column['name'];
+    }, $inspectionItemColumns);
+
+    if (!in_array('photo_file_id', $inspectionItemColumnNames, true)) {
+        $pdo->exec('ALTER TABLE inspection_items ADD COLUMN photo_file_id INTEGER NULL REFERENCES files(id) ON DELETE SET NULL');
+    }
+
+    $fileColumns = $pdo->query('PRAGMA table_info(files)')->fetchAll(PDO::FETCH_ASSOC);
+    $fileColumnNames = array_map(function ($column) {
+        return $column['name'];
+    }, $fileColumns);
+
+    if (!in_array('uploaded_by_user_id', $fileColumnNames, true)) {
+        $pdo->exec('ALTER TABLE files ADD COLUMN uploaded_by_user_id INTEGER NULL REFERENCES users(id) ON DELETE SET NULL');
     }
 
     $ensured = true;
@@ -493,6 +515,34 @@ function require_contractor(array $user)
     ensure_contractor_profile($user);
 
     return $user;
+}
+
+function require_scoped_file($fileId, $organizationId, $objectId = 0, $imageOnly = false)
+{
+    $fileId = (int)$fileId;
+
+    if ($fileId <= 0) {
+        return null;
+    }
+
+    $query = 'SELECT * FROM files WHERE id = :id AND organization_id = :organization_id';
+    $params = ['id' => $fileId, 'organization_id' => $organizationId];
+
+    if ((int)$objectId > 0) {
+        $query .= ' AND object_id = :object_id';
+        $params['object_id'] = $objectId;
+    }
+
+    $query .= ' LIMIT 1';
+    $statement = db()->prepare($query);
+    $statement->execute($params);
+    $file = $statement->fetch();
+
+    if (!$file || ($imageOnly && strpos((string)$file['mime_type'], 'image/') !== 0)) {
+        respond(422, ['error' => 'Uploaded file is invalid.']);
+    }
+
+    return $file;
 }
 
 function ensure_contractor_profile(array $user, $preferredName = '')

@@ -4,3 +4,4 @@ prototype-standalone.html
 api/config.php
 api/uploads/*
 !api/uploads/.gitkeep
+!api/uploads/.htaccess

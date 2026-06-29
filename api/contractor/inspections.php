@@ -116,11 +116,11 @@ try {
     $insertExtinguisher = $pdo->prepare(
         'INSERT INTO extinguishers (
             organization_id, object_id, room_id, number, name, type_mark, manufacturer, factory_number,
-            placement_date, manufacture_date, next_recharge_date, service_life, responsible_person, status
+            placement_date, manufacture_date, next_recharge_date, service_life, responsible_person, status, photo_file_id
          )
          VALUES (
             :organization_id, :object_id, :room_id, :number, :name, :type_mark, :manufacturer, :factory_number,
-            :placement_date, :manufacture_date, :next_recharge_date, :service_life, :responsible_person, :status
+            :placement_date, :manufacture_date, :next_recharge_date, :service_life, :responsible_person, :status, :photo_file_id
          )'
     );
     $updateExtinguisher = $pdo->prepare(
@@ -134,7 +134,8 @@ try {
              next_recharge_date = :next_recharge_date,
              service_life = :service_life,
              responsible_person = :responsible_person,
-             status = :status
+             status = :status,
+             photo_file_id = COALESCE(:photo_file_id, photo_file_id)
          WHERE id = :id AND organization_id = :organization_id AND object_id = :object_id'
     );
     $insertItem = $pdo->prepare(
@@ -142,18 +143,18 @@ try {
             inspection_id, extinguisher_id, number, place, name, manufacturer, release_date, factory_number,
             assigned_number, placement_date, manufacture_date, next_recharge_date, service_life, responsible_person,
             next_planned_test_date, recharge_date, otv_mark, post_recharge_result,
-            mass, check_type, work_types, result, comment
+            mass, check_type, work_types, result, comment, photo_file_id
          )
          VALUES (
             :inspection_id, :extinguisher_id, :number, :place, :name, :manufacturer, :release_date, :factory_number,
             :assigned_number, :placement_date, :manufacture_date, :next_recharge_date, :service_life, :responsible_person,
             :next_planned_test_date, :recharge_date, :otv_mark, :post_recharge_result,
-            :mass, :check_type, :work_types, :result, :comment
+            :mass, :check_type, :work_types, :result, :comment, :photo_file_id
          )'
     );
     $insertIssue = $pdo->prepare(
-        'INSERT INTO issues (organization_id, object_id, extinguisher_id, title, comment)
-         VALUES (:organization_id, :object_id, :extinguisher_id, :title, :comment)'
+        'INSERT INTO issues (organization_id, object_id, extinguisher_id, title, comment, photo_file_id)
+         VALUES (:organization_id, :object_id, :extinguisher_id, :title, :comment, :photo_file_id)'
     );
     $insertEvent = $pdo->prepare(
         'INSERT INTO extinguisher_events (
@@ -192,7 +193,10 @@ try {
         }, $workTypes)));
         $comment = trim((string)(isset($item['comment']) ? $item['comment'] : ''));
         $decommissioned = !empty($item['decommissioned']);
+        $photoFileId = (int)(isset($item['photoFileId']) ? $item['photoFileId'] : 0);
         $status = contractor_result_status($result, $decommissioned);
+
+        require_scoped_file($photoFileId, $object['organization_id'], $objectId, true);
 
         if ($number === '') {
             $number = $assignedNumber !== '' ? $assignedNumber : 'Без номера';
@@ -213,6 +217,7 @@ try {
                 'service_life' => $serviceLife !== '' ? $serviceLife : null,
                 'responsible_person' => $responsiblePerson !== '' ? $responsiblePerson : null,
                 'status' => $status,
+                'photo_file_id' => $photoFileId > 0 ? $photoFileId : null,
             ]);
         } else {
             $insertExtinguisher->execute([
@@ -230,6 +235,7 @@ try {
                 'service_life' => $serviceLife !== '' ? $serviceLife : null,
                 'responsible_person' => $responsiblePerson !== '' ? $responsiblePerson : null,
                 'status' => $status,
+                'photo_file_id' => $photoFileId > 0 ? $photoFileId : null,
             ]);
             $extinguisherId = (int)$pdo->lastInsertId();
         }
@@ -279,6 +285,7 @@ try {
                 'result' => $result,
                 'comment' => $comment,
                 'inspectionId' => $inspectionId,
+                'photoFileId' => $photoFileId > 0 ? $photoFileId : null,
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         ]);
 
@@ -306,6 +313,7 @@ try {
             'work_types' => count($workTypes) ? json_encode($workTypes, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
             'result' => $result !== '' ? $result : null,
             'comment' => $comment !== '' ? $comment : null,
+            'photo_file_id' => $photoFileId > 0 ? $photoFileId : null,
         ]);
 
         if ($status !== 'ok') {
@@ -318,6 +326,7 @@ try {
                 'extinguisher_id' => $extinguisherId > 0 ? $extinguisherId : null,
                 'title' => $issueTitle,
                 'comment' => $comment !== '' ? $comment : null,
+                'photo_file_id' => $photoFileId > 0 ? $photoFileId : null,
             ]);
         }
     }

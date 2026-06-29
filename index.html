@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Регистрация | Учет огнетушителей</title>
-    <link rel="stylesheet" href="./styles.css?v=20260629-desktop-2" />
+    <link rel="stylesheet" href="./styles.css?v=20260629-upload-4" />
   </head>
   <body>
     <main class="app-shell" aria-labelledby="page-title">
@@ -643,6 +643,6 @@
       </section>
     </main>
 
-    <script src="./script.js?v=20260629-health-2"></script>
+    <script src="./script.js?v=20260629-upload-4"></script>
   </body>
 </html>

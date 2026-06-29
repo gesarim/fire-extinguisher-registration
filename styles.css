@@ -614,6 +614,29 @@ button:focus-visible {
   white-space: nowrap;
 }
 
+.document-download {
+  text-decoration: underline;
+  text-decoration-color: rgba(29, 29, 31, 0.28);
+  text-underline-offset: 3px;
+}
+
+.file-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.upload-hint {
+  display: block;
+  color: var(--placeholder);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .document-action {
   min-height: 36px;
   border: 0;
@@ -2195,16 +2218,47 @@ button:focus-visible {
   background: var(--control);
 }
 
-.photo-preview {
+.photo-preview-image {
   width: 60px;
   height: 60px;
-  display: grid;
-  place-items: center;
   border-radius: 10px;
   background: var(--surface);
-  color: var(--placeholder);
-  font-size: 12px;
-  font-weight: 500;
+  object-fit: cover;
+}
+
+.uploaded-photo-link,
+.extinguisher-photo {
+  display: block;
+  width: fit-content;
+}
+
+.uploaded-photo-link img {
+  width: 112px;
+  height: 84px;
+  margin-top: 8px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.extinguisher-photo img {
+  width: min(100%, 420px);
+  max-height: 320px;
+  border-radius: var(--radius);
+  object-fit: cover;
+}
+
+@media (max-width: 560px) {
+  .photo-item {
+    grid-template-columns: 60px minmax(0, 1fr) auto;
+  }
+
+  .photo-item [data-replace-photo] {
+    grid-column: 2;
+  }
+
+  .photo-item [data-remove-photo] {
+    grid-column: 3;
+  }
 }
 
 .extinguisher-save-button {

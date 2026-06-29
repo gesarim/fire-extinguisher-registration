@@ -86,8 +86,8 @@ const deleteObjectModal = document.querySelector("#deleteObjectModal");
 const deleteObjectModalText = document.querySelector("#deleteObjectModalText");
 const deleteObjectCancelButton = document.querySelector("#deleteObjectCancelButton");
 const deleteObjectConfirmButton = document.querySelector("#deleteObjectConfirmButton");
-const photoUpload = document.querySelector("#photoUpload");
-const uploadPhotoButton = document.querySelector("#uploadPhotoButton");
+let photoUpload = document.querySelector("#photoUpload");
+let uploadPhotoButton = document.querySelector("#uploadPhotoButton");
 const addExtinguisherFormFields = document.querySelector("#addExtinguisherFormFields");
 const newExtinguisherNumber = document.querySelector("#newExtinguisherNumber");
 const issuePhotoUpload = document.querySelector("#issuePhotoUpload");
@@ -398,6 +398,65 @@ async function apiRequest(path, options = {}) {
 
   if (!response.ok) {
     throw new Error(data.error || "Ошибка сервера");
+  }
+
+  return data;
+}
+
+const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
+const PHOTO_ACCEPT = "image/jpeg,image/png,image/webp";
+const DOCUMENT_ACCEPT = ".pdf,.doc,.docx,.xls,.xlsx";
+
+function getFileUrl(fileId, download = false) {
+  return `${API_BASE}/files.php?id=${encodeURIComponent(fileId)}${download ? "&download=1" : ""}`;
+}
+
+function validateLocalFile(file, kind) {
+  if (!file) {
+    throw new Error("Выберите файл");
+  }
+
+  if (file.size > MAX_UPLOAD_SIZE) {
+    throw new Error("Размер файла должен быть не больше 10 МБ");
+  }
+
+  const extension = file.name.split(".").pop()?.toLowerCase() || "";
+  const allowed = kind === "photo"
+    ? ["jpg", "jpeg", "png", "webp"]
+    : ["pdf", "doc", "docx", "xls", "xlsx"];
+
+  if (!allowed.includes(extension)) {
+    throw new Error(kind === "photo"
+      ? "Допустимы изображения JPG, PNG и WEBP"
+      : "Допустимы документы PDF, DOC, DOCX, XLS и XLSX");
+  }
+
+  return file;
+}
+
+async function uploadRealFile(file, { kind = "document", objectId = 0, displayName = "" } = {}) {
+  validateLocalFile(file, kind);
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("kind", kind);
+
+  if (objectId) {
+    formData.append("objectId", String(objectId));
+  }
+
+  if (displayName) {
+    formData.append("displayName", displayName);
+  }
+
+  const response = await fetch(`${API_BASE}/files.php`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.error || "Не удалось загрузить файл");
   }
 
   return data;
@@ -866,13 +925,13 @@ function renderDocumentItem(documentData) {
   const item = document.createElement("div");
   item.className = "document-item";
   item.innerHTML = `
-    <span class="document-icon">PDF</span>
-    <span class="document-name">${escapeHtml(documentData.name)}</span>
+    <span class="document-icon">FILE</span>
+    <a class="document-name document-download" href="${getFileUrl(documentData.id, true)}">${escapeHtml(documentData.name)}</a>
     <button type="button" class="document-action is-danger" data-account-remove-document>Удалить</button>
   `;
   item.querySelector("[data-account-remove-document]").addEventListener("click", async () => {
     try {
-      await apiRequest(`/organization/documents.php?id=${encodeURIComponent(documentData.id)}`, { method: "DELETE" });
+      await apiRequest(`/files.php?id=${encodeURIComponent(documentData.id)}`, { method: "DELETE" });
       await loadAccount();
       showSnackbar("Документ удален");
     } catch (error) {
@@ -1284,7 +1343,11 @@ function renderObjectSummary() {
     list.className = "summary-list";
     issues.forEach((issue) => {
       const item = document.createElement("li");
-      item.innerHTML = `<strong>${escapeHtml(issue.title)}</strong>${issue.comment ? `<small>${escapeHtml(issue.comment)}</small>` : ""}`;
+      item.innerHTML = `
+        <strong>${escapeHtml(issue.title)}</strong>
+        ${issue.comment ? `<small>${escapeHtml(issue.comment)}</small>` : ""}
+        ${issue.photo_file_id ? `<a class="uploaded-photo-link" href="${getFileUrl(issue.photo_file_id)}" target="_blank" rel="noopener"><img src="${getFileUrl(issue.photo_file_id)}" alt="Фото неисправности" /></a>` : ""}
+      `;
       list.append(item);
     });
     issuesPanel.append(list);
@@ -1629,6 +1692,7 @@ function openCheckDetail(inspection, returnView = "objectSummary") {
           <small>${escapeHtml(item.check_type || "Проверка")} · ${escapeHtml(item.result || "Результат не указан")}</small>
           <small>Работы: ${escapeHtml(formatInspectionWorkTypes(item))}</small>
           ${item.comment ? `<small>Комментарий: ${escapeHtml(item.comment)}</small>` : ""}
+          ${item.photo_file_id || item.photoFileId ? `<a class="uploaded-photo-link" href="${getFileUrl(item.photo_file_id || item.photoFileId)}" target="_blank" rel="noopener"><img src="${getFileUrl(item.photo_file_id || item.photoFileId)}" alt="Фото огнетушителя при проверке" /></a>` : ""}
         </span>
       `;
       checkDetailList.append(row);
@@ -1818,8 +1882,14 @@ function renderAddExtinguisherDetailsForm() {
       <span>Ответственное лицо и его подпись</span>
       <input type="text" placeholder="ФИО ответственного" aria-label="Ответственное лицо и его подпись" data-add-ext-responsible-person />
     </label>
+    <div class="photo-upload" id="photoUpload">
+      <button type="button" class="upload-button" id="uploadPhotoButton">Загрузить фото</button>
+    </div>
   `;
 
+  photoUpload = addExtinguisherFormFields.querySelector("#photoUpload");
+  uploadPhotoButton = addExtinguisherFormFields.querySelector("#uploadPhotoButton");
+  bindPhotoUpload(photoUpload, uploadPhotoButton);
   populateAddExtinguisherPlaceInput();
 }
 
@@ -3048,7 +3118,20 @@ saveClientButton.addEventListener("click", async () => {
     return;
   }
 
+  saveClientButton.disabled = true;
+
   try {
+    const documentItems = Array.from(clientForm.querySelectorAll(".document-item"));
+
+    for (const item of documentItems) {
+      if (item._documentFile) {
+        await uploadRealFile(item._documentFile, {
+          kind: "document",
+          displayName: `${item.dataset.documentLabel || "Документ"} — ${item._documentFile.name}`,
+        });
+      }
+    }
+
     await apiRequest("/organization/contractor-invites.php", {
       method: "POST",
       body: JSON.stringify({ name, checks: collectContractorPlans() }),
@@ -3056,9 +3139,12 @@ saveClientButton.addEventListener("click", async () => {
     resetClientForm();
     clientForm.classList.add("is-hidden");
     accountLinkButton.classList.remove("is-hidden");
+    await loadAccount();
     showSnackbar("Приглашение подрядчика сохранено");
   } catch (error) {
     showSnackbar(error.message);
+  } finally {
+    saveClientButton.disabled = false;
   }
 });
 
@@ -3300,7 +3386,7 @@ addExtinguisherButton.addEventListener("click", () => {
   openAddExtinguisher();
 });
 
-saveExtinguisherButton.addEventListener("click", () => {
+saveExtinguisherButton.addEventListener("click", async () => {
   const details = getAddExtinguisherDetails();
 
   if (addExtinguisherReturnTarget === "contractorInspection") {
@@ -3311,7 +3397,17 @@ saveExtinguisherButton.addEventListener("click", () => {
       return;
     }
 
-    returnFromAddExtinguisher("Огнетушитель добавлен в проверку");
+    saveExtinguisherButton.disabled = true;
+
+    try {
+      await uploadPendingPhoto(photoUpload, appState.contractor.currentObjectId);
+      returnFromAddExtinguisher("Огнетушитель добавлен в проверку");
+      photoUpload._renderPhoto({});
+    } catch (error) {
+      showSnackbar(error.message);
+    } finally {
+      saveExtinguisherButton.disabled = false;
+    }
     return;
   }
 
@@ -3327,9 +3423,13 @@ saveExtinguisherButton.addEventListener("click", () => {
     return;
   }
 
-  apiRequest("/organization/extinguishers.php", {
-    method: "POST",
-    body: JSON.stringify({
+  saveExtinguisherButton.disabled = true;
+
+  try {
+    const photoFileId = await uploadPendingPhoto(photoUpload, appState.currentObjectId);
+    await apiRequest("/organization/extinguishers.php", {
+      method: "POST",
+      body: JSON.stringify({
       objectId: appState.currentObjectId,
       roomId: details.roomId,
       floorName: details.floorName,
@@ -3346,18 +3446,20 @@ saveExtinguisherButton.addEventListener("click", () => {
       nextRechargeDate: details.nextRechargeDate,
       serviceLife: details.serviceLife,
       responsiblePerson: details.responsiblePerson,
-    }),
-  })
-    .then(async () => {
-      addExtinguisherFormFields.querySelectorAll("input").forEach((input) => {
-        input.value = "";
-      });
-      await openObjectSummary(appState.currentObjectId);
-      returnFromAddExtinguisher("Огнетушитель добавлен");
-    })
-    .catch((error) => {
-      showSnackbar(error.message);
+      photoFileId,
+      }),
     });
+    addExtinguisherFormFields.querySelectorAll("input").forEach((input) => {
+      input.value = "";
+    });
+    photoUpload._renderPhoto({});
+    await openObjectSummary(appState.currentObjectId);
+    returnFromAddExtinguisher("Огнетушитель добавлен");
+  } catch (error) {
+    showSnackbar(error.message);
+  } finally {
+    saveExtinguisherButton.disabled = false;
+  }
 });
 
 addIssueButton.addEventListener("click", () => {
@@ -3475,7 +3577,7 @@ objectEditPanel.addEventListener("change", (event) => {
   refreshObjectEditControls(formElement);
 });
 
-saveIssueButton.addEventListener("click", () => {
+saveIssueButton.addEventListener("click", async () => {
   if (!appState.currentObjectId) {
     showSnackbar("Сначала выберите объект");
     return;
@@ -3489,24 +3591,30 @@ saveIssueButton.addEventListener("click", () => {
     ? `Неисправность огнетушителя № ${extinguisherSelect.selectedOptions[0]?.textContent.replace("Огнетушитель № ", "") || ""}`
     : "Неисправность на объекте";
 
-  apiRequest("/organization/issues.php", {
-    method: "POST",
-    body: JSON.stringify({
+  saveIssueButton.disabled = true;
+
+  try {
+    const photoFileId = await uploadPendingPhoto(issuePhotoUpload, appState.currentObjectId);
+    await apiRequest("/organization/issues.php", {
+      method: "POST",
+      body: JSON.stringify({
       objectId: appState.currentObjectId,
       extinguisherId,
       title,
       comment,
-    }),
-  })
-    .then(async () => {
-      await openObjectSummary(appState.currentObjectId);
-      setSummaryTab("issues");
-      document.querySelector("#issueComment").value = "";
-      showSnackbar("Неисправность зафиксирована");
-    })
-    .catch((error) => {
-      showSnackbar(error.message);
+      photoFileId,
+      }),
     });
+    issuePhotoUpload._renderPhoto({});
+    await openObjectSummary(appState.currentObjectId);
+    setSummaryTab("issues");
+    document.querySelector("#issueComment").value = "";
+    showSnackbar("Неисправность зафиксирована");
+  } catch (error) {
+    showSnackbar(error.message);
+  } finally {
+    saveIssueButton.disabled = false;
+  }
 });
 
 document.querySelectorAll("[data-object-next]").forEach((button) => {
@@ -3537,24 +3645,42 @@ document.querySelectorAll("[data-add-room]").forEach((button) => {
   });
 });
 
-let documentUploadCount = 0;
-
-function createDocumentItem(label) {
-  documentUploadCount += 1;
-  const fileName = `${label} ${documentUploadCount}.pdf`;
+function createDocumentItem(label, file) {
   const item = document.createElement("div");
   item.className = "document-item";
+  item._documentFile = file;
+  item.dataset.documentLabel = label;
   item.innerHTML = `
-    <span class="document-icon">PDF</span>
-    <span class="document-name">${fileName}</span>
+    <span class="document-icon">${escapeHtml((file.name.split(".").pop() || "FILE").toUpperCase())}</span>
+    <span class="document-name">${escapeHtml(file.name)}</span>
     <button type="button" class="document-action" data-replace-document>Заменить</button>
     <button type="button" class="document-action is-danger" data-remove-document>Удалить</button>
   `;
 
+  const replacementInput = document.createElement("input");
+  replacementInput.type = "file";
+  replacementInput.accept = DOCUMENT_ACCEPT;
+  replacementInput.className = "file-input-hidden";
+  replacementInput.hidden = true;
+  replacementInput.setAttribute("aria-hidden", "true");
+  replacementInput.tabIndex = -1;
+  item.append(replacementInput);
+
   item.querySelector("[data-replace-document]").addEventListener("click", (event) => {
     event.stopPropagation();
-    item.querySelector(".document-name").textContent = `${label} ${documentUploadCount + 1}.pdf`;
-    documentUploadCount += 1;
+    replacementInput.click();
+  });
+
+  replacementInput.addEventListener("change", () => {
+    try {
+      const nextFile = validateLocalFile(replacementInput.files?.[0], "document");
+      item._documentFile = nextFile;
+      item.querySelector(".document-name").textContent = nextFile.name;
+      item.querySelector(".document-icon").textContent = (nextFile.name.split(".").pop() || "FILE").toUpperCase();
+    } catch (error) {
+      replacementInput.value = "";
+      showSnackbar(error.message);
+    }
   });
 
   item.querySelector("[data-remove-document]").addEventListener("click", (event) => {
@@ -3565,33 +3691,112 @@ function createDocumentItem(label) {
   return item;
 }
 
-function createPhotoItem(uploadButton) {
+function createPhotoItem({ name, url }) {
   const item = document.createElement("div");
   item.className = "photo-item";
   item.innerHTML = `
-    <span class="photo-preview">Фото</span>
-    <span class="document-name">Фото огнетушителя.jpg</span>
+    <img class="photo-preview-image" src="${escapeHtml(url)}" alt="Загруженное фото" />
+    <span class="document-name">${escapeHtml(name || "Фото")}</span>
     <button type="button" class="document-action" data-replace-photo>Заменить</button>
     <button type="button" class="document-action is-danger" data-remove-photo>Удалить</button>
   `;
-
-  item.querySelector("[data-replace-photo]").addEventListener("click", () => {
-    item.querySelector(".document-name").textContent = "Новое фото огнетушителя.jpg";
-  });
-
-  item.querySelector("[data-remove-photo]").addEventListener("click", () => {
-    item.remove();
-    uploadButton.classList.remove("is-hidden");
-  });
-
   return item;
 }
 
-function bindContractorPhotoUpload(button) {
-  button.addEventListener("click", () => {
-    button.parentElement.prepend(createPhotoItem(button));
+function bindPhotoUpload(container, button, initialFileId = 0, initialName = "") {
+  if (!container.querySelector(".upload-hint")) {
+    const hint = document.createElement("small");
+    hint.className = "upload-hint";
+    hint.textContent = "JPG, PNG или WEBP · до 10 МБ";
+    container.append(hint);
+  }
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = PHOTO_ACCEPT;
+  input.className = "file-input-hidden";
+  input.hidden = true;
+  input.setAttribute("aria-hidden", "true");
+  input.tabIndex = -1;
+  container.append(input);
+
+  const render = ({ file = null, fileId = 0, name = "", url = "" }) => {
+    const previous = container.querySelector(".photo-item");
+    const previousUrl = previous?.dataset.localUrl || "";
+
+    if (previousUrl) {
+      URL.revokeObjectURL(previousUrl);
+    }
+
+    previous?.remove();
+    container._pendingFile = file;
+    container.dataset.fileId = fileId ? String(fileId) : "";
+
+    if (!file && !fileId) {
+      button.classList.remove("is-hidden");
+      return;
+    }
+
+    const previewUrl = url || (file ? URL.createObjectURL(file) : getFileUrl(fileId));
+    const item = createPhotoItem({ name: name || file?.name || "Фото", url: previewUrl });
+
+    if (file && previewUrl) {
+      item.dataset.localUrl = previewUrl;
+    }
+
+    item.querySelector("[data-replace-photo]").addEventListener("click", () => input.click());
+    item.querySelector("[data-remove-photo]").addEventListener("click", () => {
+      input.value = "";
+      render({});
+    });
+    container.prepend(item);
     button.classList.add("is-hidden");
+  };
+
+  button.addEventListener("click", () => input.click());
+  input.addEventListener("change", () => {
+    try {
+      const file = validateLocalFile(input.files?.[0], "photo");
+      render({ file, name: file.name });
+    } catch (error) {
+      input.value = "";
+      showSnackbar(error.message);
+    }
   });
+
+  if (initialFileId) {
+    render({ fileId: initialFileId, name: initialName || "Фото огнетушителя" });
+  }
+
+  container._renderPhoto = render;
+  return container;
+}
+
+async function uploadPendingPhoto(container, objectId) {
+  if (!container?._pendingFile) {
+    return Number(container?.dataset.fileId || 0);
+  }
+
+  const uploaded = await uploadRealFile(container._pendingFile, { kind: "photo", objectId });
+  container._renderPhoto({ fileId: uploaded.id, name: uploaded.name, url: getFileUrl(uploaded.id) });
+  return Number(uploaded.id);
+}
+
+async function uploadPendingInspectionPhotos(objectId) {
+  const cards = Array.from(inspectionList.querySelectorAll(".inspection-card"));
+
+  for (const card of cards) {
+    const container = card.querySelector(".photo-upload");
+
+    if (container) {
+      card.dataset.photoFileId = String(await uploadPendingPhoto(container, objectId) || "");
+    }
+  }
+}
+
+function bindContractorPhotoUpload(button, data = {}) {
+  const container = button.parentElement;
+  bindPhotoUpload(container, button, data.photoFileId || data.photo_file_id || 0, data.photoName || "Фото огнетушителя");
 }
 
 function bindDecommissionButton(button) {
@@ -3602,6 +3807,10 @@ function bindDecommissionButton(button) {
 
 function saveInspectionFormState(form) {
   form.querySelectorAll("input, textarea").forEach((input) => {
+    if (input.type === "file") {
+      return;
+    }
+
     if (input.type === "checkbox") {
       input.defaultChecked = input.checked;
       return;
@@ -3618,6 +3827,10 @@ function saveInspectionFormState(form) {
 
 function resetInspectionFormState(form) {
   form.querySelectorAll("input, textarea").forEach((input) => {
+    if (input.type === "file") {
+      return;
+    }
+
     if (input.type === "checkbox") {
       input.checked = input.defaultChecked;
       return;
@@ -3638,6 +3851,7 @@ async function saveCurrentContractorInspectionDraft() {
     return;
   }
 
+  await uploadPendingInspectionPhotos(objectId);
   const items = collectContractorInspectionItems();
   appState.contractor.inspectionDrafts[objectId] = {
     items,
@@ -3682,6 +3896,7 @@ function applyContractorInspectionDraft(objectId) {
     nextRechargeDate: item.nextRechargeDate,
     serviceLife: item.serviceLife,
     responsiblePerson: item.responsiblePerson,
+    photoFileId: item.photoFileId || item.photo_file_id || "",
     nextTestDate: item.nextTestDate,
     rechargeDate: item.rechargeDate,
     otvMark: item.otvMark,
@@ -3706,6 +3921,7 @@ function bindInspectionEditButtons(card) {
     try {
       await saveCurrentContractorInspectionDraft();
       saveInspectionFormState(form);
+      card.dataset.savedPhotoFileId = card.dataset.photoFileId || "";
       const toggle = card.querySelector(".inspection-card-toggle");
       card.classList.remove("is-open");
       toggle?.setAttribute("aria-expanded", "false");
@@ -3720,6 +3936,16 @@ function bindInspectionEditButtons(card) {
 
   cancelButton.addEventListener("click", () => {
     resetInspectionFormState(form);
+    const photoContainer = card.querySelector(".photo-upload");
+    const savedPhotoFileId = Number(card.dataset.savedPhotoFileId || 0);
+
+    if (photoContainer?._renderPhoto) {
+      photoContainer._renderPhoto(savedPhotoFileId
+        ? { fileId: savedPhotoFileId, name: "Фото огнетушителя" }
+        : {});
+      card.dataset.photoFileId = savedPhotoFileId ? String(savedPhotoFileId) : "";
+    }
+
     showSnackbar("Изменения отменены");
   });
 }
@@ -3963,6 +4189,7 @@ function renderExtinguisherDetail(extinguisher) {
         <span>Карточка огнетушителя</span>
         <strong class="extinguisher-status${statusClass}">${escapeHtml(statusText)}</strong>
       </div>
+      ${extinguisher.photo_file_id || extinguisher.photoFileId ? `<a class="extinguisher-photo" href="${getFileUrl(extinguisher.photo_file_id || extinguisher.photoFileId)}" target="_blank" rel="noopener"><img src="${getFileUrl(extinguisher.photo_file_id || extinguisher.photoFileId)}" alt="Фото огнетушителя № ${escapeHtml(getExtinguisherNumber(extinguisher) || "")}" /></a>` : ""}
       <dl class="extinguisher-passport-grid">
         <div><dt>Номер присвоенный</dt><dd>${escapeHtml(getExtinguisherNumber(extinguisher) || "Не указан")}</dd></div>
         <div><dt>Дата размещения</dt><dd>${escapeHtml(extinguisher.placement_date || "Не указана")}</dd></div>
@@ -4648,6 +4875,7 @@ function mapExtinguisherToInspection(extinguisher) {
     nextRechargeDate: extinguisher.next_recharge_date || extinguisher.nextRechargeDate || "",
     serviceLife: extinguisher.service_life || extinguisher.serviceLife || "",
     responsiblePerson: extinguisher.responsible_person || extinguisher.responsiblePerson || "",
+    photoFileId: extinguisher.photo_file_id || extinguisher.photoFileId || "",
     nextTestDate: extinguisher.next_planned_test_date || extinguisher.nextTestDate || "",
     rechargeDate: extinguisher.recharge_date || extinguisher.rechargeDate || "",
     otvMark: extinguisher.otv_mark || extinguisher.otvMark || "",
@@ -4679,6 +4907,8 @@ function createContractorInspectionCard(data, isOpen = false) {
   card.className = `inspection-card${isOpen ? " is-open" : ""}`;
   card.dataset.extinguisherId = data.id || "";
   card.dataset.roomId = data.roomId || "";
+  card.dataset.photoFileId = data.photoFileId || data.photo_file_id || "";
+  card.dataset.savedPhotoFileId = card.dataset.photoFileId;
   card.dataset.decommissioned = data.decommissioned ? "true" : "false";
   const selectedWorkTypes = new Set(getInspectionWorkTypes(data));
   const workTypesMarkup = INSPECTION_WORK_TYPES.map((workType) => `
@@ -4801,7 +5031,7 @@ function createContractorInspectionCard(data, isOpen = false) {
     body.hidden = !nextState;
   });
 
-  bindContractorPhotoUpload(card.querySelector("[data-contractor-photo-upload]"));
+  bindContractorPhotoUpload(card.querySelector("[data-contractor-photo-upload]"), data);
   bindDecommissionButton(card.querySelector("[data-decommission-extinguisher]"));
   bindInspectionEditButtons(card);
 
@@ -4847,6 +5077,7 @@ function addContractorInspectionCard() {
     nextRechargeDate: details.nextRechargeDate,
     serviceLife: details.serviceLife,
     responsiblePerson: details.responsiblePerson,
+    photoFileId: photoUpload.dataset.fileId || "",
     nextTestDate: "",
     rechargeDate: "",
     otvMark: "",
@@ -4899,6 +5130,7 @@ function collectContractorInspectionItems() {
       otvMark: getValue("[data-inspection-otv-mark]"),
       postRechargeResult: getValue("[data-inspection-post-recharge-result]"),
       comment: getValue("[data-inspection-comment]"),
+      photoFileId: card.dataset.photoFileId || "",
       mass: getValue("[data-inspection-mass]"),
       checkType: card.querySelector("[data-inspection-check-type]")?.value || inspectionTypeSelect.value,
       workTypes: Array.from(card.querySelectorAll("[data-inspection-work-type]:checked")).map((input) => input.value),
@@ -4909,22 +5141,38 @@ function collectContractorInspectionItems() {
 }
 
 document.querySelectorAll("button[data-client-upload-label]").forEach((button) => {
-  button.addEventListener("click", () => {
-    const group = button.closest("[data-client-document-group]");
-    const grid = group.querySelector(".document-grid");
-    grid.append(createDocumentItem(button.dataset.clientUploadLabel || "Документ"));
+  const group = button.closest("[data-client-document-group]");
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = DOCUMENT_ACCEPT;
+  input.className = "file-input-hidden";
+  input.hidden = true;
+  input.setAttribute("aria-hidden", "true");
+  input.tabIndex = -1;
+  group.append(input);
+
+  if (!group.querySelector(".upload-hint")) {
+    const hint = document.createElement("small");
+    hint.className = "upload-hint";
+    hint.textContent = "PDF, DOC, DOCX, XLS или XLSX · до 10 МБ";
+    group.append(hint);
+  }
+
+  button.addEventListener("click", () => input.click());
+  input.addEventListener("change", () => {
+    try {
+      const file = validateLocalFile(input.files?.[0], "document");
+      group.querySelector(".document-grid").append(createDocumentItem(button.dataset.clientUploadLabel || "Документ", file));
+      input.value = "";
+    } catch (error) {
+      input.value = "";
+      showSnackbar(error.message);
+    }
   });
 });
 
-uploadPhotoButton.addEventListener("click", () => {
-  photoUpload.prepend(createPhotoItem(uploadPhotoButton));
-  uploadPhotoButton.classList.add("is-hidden");
-});
-
-uploadIssuePhotoButton.addEventListener("click", () => {
-  issuePhotoUpload.prepend(createPhotoItem(uploadIssuePhotoButton));
-  uploadIssuePhotoButton.classList.add("is-hidden");
-});
+bindPhotoUpload(photoUpload, uploadPhotoButton);
+bindPhotoUpload(issuePhotoUpload, uploadIssuePhotoButton);
 
 document.querySelectorAll("[data-contractor-photo-upload]").forEach((button) => {
   bindContractorPhotoUpload(button);
@@ -4971,21 +5219,22 @@ saveObjectButton.addEventListener("click", async () => {
 
 finishContractorInspectionButton.addEventListener("click", async () => {
   const objectId = appState.contractor.currentObjectId;
-  const items = collectContractorInspectionItems();
 
   if (!objectId) {
     showSnackbar("Сначала выберите объект");
     return;
   }
 
-  if (!items.length) {
-    showSnackbar("Добавьте хотя бы один огнетушитель в проверку");
-    return;
-  }
-
   finishContractorInspectionButton.disabled = true;
 
   try {
+    await uploadPendingInspectionPhotos(objectId);
+    const items = collectContractorInspectionItems();
+
+    if (!items.length) {
+      throw new Error("Добавьте хотя бы один огнетушитель в проверку");
+    }
+
     await apiRequest("/contractor/inspections.php", {
       method: "POST",
       body: JSON.stringify({

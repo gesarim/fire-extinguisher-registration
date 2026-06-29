@@ -83,6 +83,7 @@ function normalize_draft_items($items)
             'workTypes' => $workTypes,
             'result' => trim((string)(isset($item['result']) ? $item['result'] : '')) ?: 'Годный к эксплуатации',
             'comment' => trim((string)(isset($item['comment']) ? $item['comment'] : '')),
+            'photoFileId' => (int)(isset($item['photoFileId']) ? $item['photoFileId'] : 0),
             'decommissioned' => !empty($item['decommissioned']),
         ];
     }
@@ -142,6 +143,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!count($items)) {
         respond(422, ['error' => 'Inspection items are required.']);
+    }
+
+    foreach ($items as $item) {
+        require_scoped_file(isset($item['photoFileId']) ? $item['photoFileId'] : 0, $object['organization_id'], $objectId, true);
     }
 
     $payload = json_encode([

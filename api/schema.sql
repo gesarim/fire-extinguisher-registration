@@ -104,9 +104,11 @@ CREATE TABLE files (
   path VARCHAR(500) NOT NULL,
   mime_type VARCHAR(120) NULL,
   size_bytes BIGINT UNSIGNED NULL,
+  uploaded_by_user_id BIGINT UNSIGNED NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-  FOREIGN KEY (object_id) REFERENCES objects(id) ON DELETE SET NULL
+  FOREIGN KEY (object_id) REFERENCES objects(id) ON DELETE SET NULL,
+  FOREIGN KEY (uploaded_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE extinguishers (
@@ -223,9 +225,11 @@ CREATE TABLE inspection_items (
   work_types TEXT NULL,
   result VARCHAR(255) NULL,
   comment TEXT NULL,
+  photo_file_id BIGINT UNSIGNED NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (inspection_id) REFERENCES inspections(id) ON DELETE CASCADE,
-  FOREIGN KEY (extinguisher_id) REFERENCES extinguishers(id) ON DELETE SET NULL
+  FOREIGN KEY (extinguisher_id) REFERENCES extinguishers(id) ON DELETE SET NULL,
+  FOREIGN KEY (photo_file_id) REFERENCES files(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE contractor_inspection_drafts (
