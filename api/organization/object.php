@@ -276,13 +276,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
         }
 
         $extinguisherCheck = $pdo->prepare(
-            'SELECT id, room_id, number, name, type_mark FROM extinguishers
+            'SELECT id, room_id, number FROM extinguishers
              WHERE id = :id AND organization_id = :organization_id AND object_id = :object_id
              LIMIT 1'
         );
         $updateExtinguisher = $pdo->prepare(
             'UPDATE extinguishers
-             SET room_id = :room_id, number = :number, name = :name, type_mark = :type_mark
+             SET room_id = :room_id, number = :number
              WHERE id = :id AND organization_id = :organization_id AND object_id = :object_id'
         );
         $insertExtinguisherEvent = $pdo->prepare(
@@ -317,20 +317,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
 
             $roomClientKey = trim((string)(isset($extinguisher['roomClientKey']) ? $extinguisher['roomClientKey'] : ''));
             $roomId = isset($roomIdByClientKey[$roomClientKey]) ? (int)$roomIdByClientKey[$roomClientKey] : null;
-            $extinguisherName = trim((string)(isset($extinguisher['name']) ? $extinguisher['name'] : ''));
-            $savedName = $extinguisherName !== '' ? $extinguisherName : null;
-            $existingName = isset($existingExtinguisher['type_mark']) && $existingExtinguisher['type_mark'] !== null && $existingExtinguisher['type_mark'] !== ''
-                ? $existingExtinguisher['type_mark']
-                : (isset($existingExtinguisher['name']) ? $existingExtinguisher['name'] : '');
             $hasCardChanges = (string)$existingExtinguisher['number'] !== $number
-                || (string)$existingName !== (string)$savedName
                 || (int)(isset($existingExtinguisher['room_id']) ? $existingExtinguisher['room_id'] : 0) !== (int)$roomId;
 
             $updateExtinguisher->execute([
                 'room_id' => $roomId,
                 'number' => $number,
-                'name' => $savedName,
-                'type_mark' => $savedName,
                 'id' => $extinguisherId,
                 'organization_id' => $organization['id'],
                 'object_id' => $objectId,
@@ -346,13 +338,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
                         'before' => [
                             'roomId' => isset($existingExtinguisher['room_id']) ? $existingExtinguisher['room_id'] : null,
                             'number' => isset($existingExtinguisher['number']) ? $existingExtinguisher['number'] : '',
-                            'name' => $existingName,
                         ],
                         'after' => [
                             'roomId' => $roomId,
                             'number' => $number,
-                            'name' => $savedName,
-                            'typeMark' => $savedName,
                         ],
                     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 ]);

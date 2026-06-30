@@ -643,6 +643,6 @@
       </section>
     </main>
 
-    <script src="./script.js?v=20260630-workflow-2"></script>
+    <script src="./script.js?v=20260630-object-edit-1"></script>
   </body>
 </html>

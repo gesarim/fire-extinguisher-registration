@@ -1559,13 +1559,11 @@ function renderObjectEditExtinguishers(formElement, extinguishers) {
         <span>${escapeHtml(extinguisher.status || "ok")}</span>
       </div>
       <div class="object-edit-grid">
-        <input type="text" placeholder="Номер огнетушителя" aria-label="Номер огнетушителя" data-edit-ext-number />
-        <input type="text" placeholder="Например: ОП-4" aria-label="Тип и марка огнетушителя" data-edit-ext-name />
+        <input type="text" placeholder="Присвоенный номер" aria-label="Присвоенный номер огнетушителя" data-edit-ext-number />
       </div>
-      <select aria-label="Место установки" data-edit-ext-room></select>
+      <select aria-label="Место размещения огнетушителя" data-edit-ext-room></select>
     `;
     card.querySelector("[data-edit-ext-number]").value = extinguisher.number || "";
-    card.querySelector("[data-edit-ext-name]").value = getExtinguisherTypeMark(extinguisher);
     card.querySelector("[data-edit-ext-room]").dataset.selectedRoomKey = extinguisher.room_id ? `room:${extinguisher.room_id}` : "";
     list.append(card);
   });
@@ -1668,7 +1666,6 @@ function collectObjectEditFormData() {
   const extinguishers = Array.from(formElement.querySelectorAll("[data-extinguisher-id]")).map((card) => ({
     id: card.dataset.extinguisherId,
     number: card.querySelector("[data-edit-ext-number]")?.value.trim() || "",
-    name: card.querySelector("[data-edit-ext-name]")?.value.trim() || "",
     roomClientKey: card.querySelector("[data-edit-ext-room]")?.value || "",
   }));
 
