@@ -567,6 +567,18 @@ function getInspectionTitle(inspection) {
   return `${getInspectionType(inspection)} проверка`;
 }
 
+function isInspectionInProgress(inspection) {
+  return inspection?.status === "in_progress";
+}
+
+function getInspectionStatusText(inspection) {
+  return isInspectionInProgress(inspection) ? "В работе" : "Завершена";
+}
+
+function getInspectionDisplayDate(inspection) {
+  return formatDate(inspection?.completed_at || inspection?.planned_at || inspection?.created_at);
+}
+
 function getInspectionWorkTypes(item) {
   const source = item?.work_types ?? item?.workTypes ?? [];
 
@@ -699,17 +711,19 @@ function renderDashboard() {
     checks.forEach((check) => {
       const row = document.createElement("button");
       row.type = "button";
-      row.className = "dashboard-check-row";
+      const inProgress = isInspectionInProgress(check);
+      row.className = `dashboard-check-row${inProgress ? " is-in-progress" : ""}`;
+      row.disabled = inProgress;
       row.innerHTML = `
         <span>
           <strong>${escapeHtml(getInspectionTitle(check))}</strong>
-          <small>${escapeHtml(check.object_name || "Объект")} · ${escapeHtml(formatDate(check.completed_at || check.planned_at))}</small>
+          <small>${escapeHtml(check.object_name || "Объект")} · ${escapeHtml(getInspectionDisplayDate(check))}</small>
         </span>
-        <span class="check-status is-ok">Отчет</span>
+        <span class="check-status${inProgress ? " is-progress" : " is-ok"}">${escapeHtml(getInspectionStatusText(check))}</span>
       `;
-      row.addEventListener("click", () => {
-        openCheckDetail(check, "dashboard");
-      });
+      if (!inProgress) {
+        row.addEventListener("click", () => openCheckDetail(check, "dashboard"));
+      }
       checkList.append(row);
     });
   }
@@ -1099,7 +1113,7 @@ function renderObjectCard(object) {
     const list = document.createElement("ul");
     checks.forEach((check) => {
       const item = document.createElement("li");
-      item.textContent = `${getInspectionTitle(check)} · ${formatDate(check.completed_at || check.planned_at)}`;
+      item.textContent = `${getInspectionTitle(check)} · ${getInspectionStatusText(check)} · ${getInspectionDisplayDate(check)}`;
       list.append(item);
     });
     checksSection.append(list);
@@ -1363,12 +1377,16 @@ function renderObjectSummary() {
     inspections.forEach((inspection) => {
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "check-row";
+      const inProgress = isInspectionInProgress(inspection);
+      button.className = `check-row${inProgress ? " is-in-progress" : ""}`;
+      button.disabled = inProgress;
       button.innerHTML = `
-        <span>${escapeHtml(getInspectionTitle(inspection))} · ${escapeHtml(formatDate(inspection.completed_at || inspection.planned_at))}</span>
-        <span aria-hidden="true">›</span>
+        <span>${escapeHtml(getInspectionTitle(inspection))} · ${escapeHtml(getInspectionDisplayDate(inspection))}</span>
+        <span class="check-status${inProgress ? " is-progress" : " is-ok"}">${escapeHtml(getInspectionStatusText(inspection))}</span>
       `;
-      button.addEventListener("click", () => openCheckDetail(inspection, "objectSummary"));
+      if (!inProgress) {
+        button.addEventListener("click", () => openCheckDetail(inspection, "objectSummary"));
+      }
       checksPanel.append(button);
     });
   }
@@ -1676,6 +1694,11 @@ async function openObjectSummary(objectId, initialTab = "structure") {
 }
 
 function openCheckDetail(inspection, returnView = "objectSummary") {
+  if (isInspectionInProgress(inspection)) {
+    showSnackbar("Проверка еще в работе");
+    return;
+  }
+
   checkDetailReturnView = returnView;
   appState.currentInspection = inspection;
   checkDetailTitle.textContent = getInspectionTitle(inspection);
@@ -1886,9 +1909,9 @@ function renderAddExtinguisherDetailsForm() {
       <span>Срок службы огнетушителя</span>
       <input type="text" placeholder="Например: до 2030 года" aria-label="Срок службы огнетушителя" data-add-ext-service-life />
     </label>
-    <label class="inspection-field">
+    <label class="inspection-field inspection-field-accent">
       <span>Ответственное лицо и его подпись</span>
-      <input type="text" placeholder="ФИО ответственного" aria-label="Ответственное лицо и его подпись" data-add-ext-responsible-person />
+      <input type="text" placeholder="ФИО ответственного" aria-label="Ответственное лицо и его подпись" required aria-required="true" data-add-ext-responsible-person />
     </label>
     <div class="photo-upload" id="photoUpload">
       <button type="button" class="upload-button" id="uploadPhotoButton">Загрузить фото</button>
@@ -2463,8 +2486,11 @@ function returnToSummaryWithSnackbar(message) {
 
 function returnFromAddExtinguisher(message) {
   if (addExtinguisherReturnTarget === "contractorInspection") {
-    addContractorInspectionCard();
+    const newCard = addContractorInspectionCard();
     showContractorInspection();
+    requestAnimationFrame(() => {
+      newCard?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
     showSnackbar(message);
     return;
   }
@@ -3005,9 +3031,6 @@ downloadObjectPdfButton.addEventListener("click", () => {
 
 inspectionTypeSelect.addEventListener("change", () => {
   contractorInspectionTitle.textContent = getInspectionTitle({ inspectionType: inspectionTypeSelect.value });
-  inspectionList.querySelectorAll("[data-inspection-check-type]").forEach((select) => {
-    select.value = inspectionTypeSelect.value;
-  });
 
   if (!appState.contractor.currentObjectId || !inspectionList.querySelector(".inspection-card")) {
     return;
@@ -3250,7 +3273,7 @@ document.querySelectorAll("[data-contractor-dashboard-target]").forEach((button)
   });
 });
 
-continueInspectionEmployeeButton.addEventListener("click", () => {
+continueInspectionEmployeeButton.addEventListener("click", async () => {
   if (inspectionEmployeeNextTarget === "inspection") {
     if (!appState.contractor.currentObjectId) {
       showSnackbar("Сначала выберите объект");
@@ -3258,7 +3281,16 @@ continueInspectionEmployeeButton.addEventListener("click", () => {
       return;
     }
 
-    showContractorInspection();
+    continueInspectionEmployeeButton.disabled = true;
+
+    try {
+      await saveCurrentContractorInspectionDraft();
+      showContractorInspection();
+    } catch (error) {
+      showSnackbar(error.message);
+    } finally {
+      continueInspectionEmployeeButton.disabled = false;
+    }
     return;
   }
 
@@ -3406,6 +3438,12 @@ saveExtinguisherButton.addEventListener("click", async () => {
       return;
     }
 
+    if (!details.responsiblePerson) {
+      showSnackbar("Укажите ответственное лицо");
+      addExtinguisherFormFields.querySelector("[data-add-ext-responsible-person]")?.focus();
+      return;
+    }
+
     saveExtinguisherButton.disabled = true;
 
     try {
@@ -3429,6 +3467,12 @@ saveExtinguisherButton.addEventListener("click", async () => {
 
   if (!number) {
     showSnackbar("Введите присвоенный номер огнетушителя");
+    return;
+  }
+
+  if (!details.responsiblePerson) {
+    showSnackbar("Укажите ответственное лицо");
+    addExtinguisherFormFields.querySelector("[data-add-ext-responsible-person]")?.focus();
     return;
   }
 
@@ -3928,6 +3972,14 @@ function bindInspectionEditButtons(card) {
   const cancelButton = card.querySelector("[data-cancel-inspection-changes]");
 
   saveButton.addEventListener("click", async () => {
+    const validationError = getInspectionCardValidationError(card);
+
+    if (validationError) {
+      showSnackbar(validationError.message);
+      validationError.field.focus();
+      return;
+    }
+
     const previousChecked = card.dataset.checked === "true";
     card.dataset.checked = "true";
     updateInspectionCardCheckedState(card);
@@ -3971,6 +4023,24 @@ function bindInspectionEditButtons(card) {
 
     showSnackbar("Изменения отменены");
   });
+}
+
+function getInspectionCardValidationError(card) {
+  const typeMarkField = card.querySelector("[data-inspection-name]");
+  const resultField = card.querySelector("[data-inspection-result]");
+  [typeMarkField, resultField].forEach((field) => field?.removeAttribute("aria-invalid"));
+
+  if (!typeMarkField?.value.trim()) {
+    typeMarkField?.setAttribute("aria-invalid", "true");
+    return { field: typeMarkField, message: "Укажите тип и марку огнетушителя" };
+  }
+
+  if (!resultField?.value) {
+    resultField?.setAttribute("aria-invalid", "true");
+    return { field: resultField, message: "Выберите результат проверки" };
+  }
+
+  return null;
 }
 
 function getSelectOptions(options, selectedValue) {
@@ -4940,7 +5010,7 @@ function mapExtinguisherToInspection(extinguisher) {
       inspectionType: extinguisher.checkType || inspectionTypeSelect?.value,
     }),
     workTypes: getInspectionWorkTypes(extinguisher),
-    result: extinguisher.result || getInspectionResultByStatus(extinguisher.status),
+    result: extinguisher.result || "",
     checked: Boolean(extinguisher.checked),
     decommissioned: extinguisher.status === "decommissioned",
   };
@@ -5045,7 +5115,7 @@ function createContractorInspectionCard(data, isOpen = false) {
       </label>
       <label class="inspection-field">
         <span>Тип и марка огнетушителя</span>
-        <input type="text" value="${escapeHtml(data.name || "")}" data-inspection-name />
+        <input type="text" value="${escapeHtml(data.name || "")}" required aria-required="true" data-inspection-name />
       </label>
       <label class="inspection-field">
         <span>Концентрация заряженного ОТВ</span>
@@ -5086,12 +5156,6 @@ function createContractorInspectionCard(data, isOpen = false) {
         <span>Полная масса (для углекислого огнетушителя)</span>
         <input type="text" value="${escapeHtml(data.mass || "")}" data-inspection-mass />
       </label>
-      <label class="inspection-field">
-        <span>Вид проверки</span>
-        <select data-inspection-check-type>
-          ${getSelectOptions(["Ежеквартальная", "Ежегодная"], getInspectionType({ inspectionType: data.checkType || inspectionTypeSelect.value }))}
-        </select>
-      </label>
       <fieldset class="inspection-work-types">
         <legend>Выполненные работы</legend>
         <p>Можно выбрать несколько вариантов</p>
@@ -5099,8 +5163,9 @@ function createContractorInspectionCard(data, isOpen = false) {
       </fieldset>
       <label class="inspection-field">
         <span>Результат проверки</span>
-        <select data-inspection-result>
-          ${getSelectOptions(["Годный к эксплуатации", "Требует перезарядки", "Требует ремонта", "Требуется замена"], data.result || "Годный к эксплуатации")}
+        <select required aria-required="true" data-inspection-result>
+          <option value="" disabled${data.result ? "" : " selected"}>Выберите результат</option>
+          ${getSelectOptions(["Годный к эксплуатации", "Требует перезарядки", "Требует ремонта", "Требуется замена"], data.result || "")}
         </select>
       </label>
       <label class="inspection-field">
@@ -5204,7 +5269,7 @@ function addContractorInspectionCard() {
     mass: details.mass,
     checkType: details.checkType,
     workTypes: [],
-    result: details.result,
+    result: "",
   };
 
   appState.contractor.currentObject = appState.contractor.currentObject || { extinguishers: [] };
@@ -5212,13 +5277,15 @@ function addContractorInspectionCard() {
   appState.contractor.currentObject.extinguishers.push(extinguisher);
 
   inspectionList.querySelector(".empty-state")?.remove();
-  inspectionList.append(createContractorInspectionCard(extinguisher, true));
+  const card = createContractorInspectionCard(extinguisher, true);
+  inspectionList.append(card);
   saveCurrentContractorInspectionDraft().catch((error) => {
     showSnackbar(error.message);
   });
   addExtinguisherFormFields.querySelectorAll("input").forEach((input) => {
     input.value = "";
   });
+  return card;
 }
 
 function collectContractorInspectionItems() {
@@ -5250,9 +5317,9 @@ function collectContractorInspectionItems() {
       comment: getValue("[data-inspection-comment]"),
       photoFileId: card.dataset.photoFileId || "",
       mass: getValue("[data-inspection-mass]"),
-      checkType: card.querySelector("[data-inspection-check-type]")?.value || inspectionTypeSelect.value,
+      checkType: inspectionTypeSelect.value,
       workTypes: Array.from(card.querySelectorAll("[data-inspection-work-type]:checked")).map((input) => input.value),
-      result: card.querySelector("[data-inspection-result]")?.value || "Годный к эксплуатации",
+      result: card.querySelector("[data-inspection-result]")?.value || "",
       checked: card.dataset.checked === "true",
       decommissioned: card.dataset.decommissioned === "true",
     };
@@ -5352,6 +5419,21 @@ finishContractorInspectionButton.addEventListener("click", async () => {
 
     if (!items.length) {
       throw new Error("Добавьте хотя бы один огнетушитель в проверку");
+    }
+
+    const isFullyCompleted = items.every((item) => item.checked);
+
+    if (!isFullyCompleted) {
+      await saveCurrentContractorInspectionDraft();
+      appState.contractor.currentObjectId = null;
+      appState.contractor.currentObject = null;
+      await loadContractorDashboard();
+      showObjects();
+      showModal(
+        "Проверка завершена не полностью",
+        "Не все огнетушители отмечены галочкой. Проверка сохранена со статусом «В работе», выгрузка документов пока недоступна."
+      );
+      return;
     }
 
     await apiRequest("/contractor/inspections.php", {

@@ -640,6 +640,59 @@ function sync_contractor_links($userId, $contractorName)
     }
 }
 
+function completed_inspection_rows($rows)
+{
+    return array_map(function ($row) {
+        $row['status'] = 'completed';
+        return $row;
+    }, is_array($rows) ? $rows : []);
+}
+
+function inspection_draft_summary($row)
+{
+    $payload = json_decode(isset($row['payload']) ? $row['payload'] : '{}', true);
+    $payload = is_array($payload) ? $payload : [];
+    $inspectionType = trim((string)(isset($payload['inspectionType']) ? $payload['inspectionType'] : 'Ежеквартальная'));
+    $items = isset($payload['items']) && is_array($payload['items']) ? $payload['items'] : [];
+    $checkedTotal = 0;
+
+    foreach ($items as $item) {
+        if (is_array($item) && !empty($item['checked'])) {
+            $checkedTotal += 1;
+        }
+    }
+
+    return [
+        'id' => 'draft-' . (isset($row['id']) ? $row['id'] : ''),
+        'object_id' => isset($row['object_id']) ? $row['object_id'] : null,
+        'object_name' => isset($row['object_name']) ? $row['object_name'] : '',
+        'title' => $inspectionType . ' проверка',
+        'inspection_type' => $inspectionType,
+        'contractor_name' => isset($row['contractor_name']) ? $row['contractor_name'] : '',
+        'employee_name' => isset($row['employee_name']) ? $row['employee_name'] : '',
+        'planned_at' => null,
+        'completed_at' => null,
+        'created_at' => isset($row['updated_at']) ? $row['updated_at'] : null,
+        'status' => 'in_progress',
+        'items_total' => count($items),
+        'checked_total' => $checkedTotal,
+        'items' => [],
+    ];
+}
+
+function sort_inspection_rows(&$rows)
+{
+    usort($rows, function ($left, $right) {
+        $leftDate = isset($left['completed_at']) && $left['completed_at']
+            ? $left['completed_at']
+            : (isset($left['created_at']) ? $left['created_at'] : '');
+        $rightDate = isset($right['completed_at']) && $right['completed_at']
+            ? $right['completed_at']
+            : (isset($right['created_at']) ? $right['created_at'] : '');
+        return strcmp((string)$rightDate, (string)$leftDate);
+    });
+}
+
 function send_mail_code($email, $code)
 {
     global $config;

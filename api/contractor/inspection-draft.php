@@ -82,7 +82,7 @@ function normalize_draft_items($items)
             'mass' => trim((string)(isset($item['mass']) ? $item['mass'] : '')),
             'checkType' => trim((string)(isset($item['checkType']) ? $item['checkType'] : '')) ?: 'Ежеквартальная',
             'workTypes' => $workTypes,
-            'result' => trim((string)(isset($item['result']) ? $item['result'] : '')) ?: 'Годный к эксплуатации',
+            'result' => trim((string)(isset($item['result']) ? $item['result'] : '')),
             'comment' => trim((string)(isset($item['comment']) ? $item['comment'] : '')),
             'photoFileId' => (int)(isset($item['photoFileId']) ? $item['photoFileId'] : 0),
             'checked' => !empty($item['checked']),

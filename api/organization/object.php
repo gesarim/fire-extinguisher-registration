@@ -117,6 +117,28 @@ if (count($inspectionRows)) {
     unset($inspectionRow);
 }
 
+$inspectionRows = completed_inspection_rows($inspectionRows);
+$drafts = db()->prepare(
+    'SELECT contractor_inspection_drafts.*, contractor_links.contractor_name, objects.name AS object_name
+     FROM contractor_inspection_drafts
+     INNER JOIN objects ON objects.id = contractor_inspection_drafts.object_id
+     LEFT JOIN contractor_links
+       ON contractor_links.contractor_user_id = contractor_inspection_drafts.contractor_user_id
+      AND contractor_links.organization_id = contractor_inspection_drafts.organization_id
+     WHERE contractor_inspection_drafts.organization_id = :organization_id
+       AND contractor_inspection_drafts.object_id = :object_id'
+);
+$drafts->execute([
+    'organization_id' => $organization['id'],
+    'object_id' => $objectId,
+]);
+
+foreach ($drafts->fetchAll() as $draftRow) {
+    $inspectionRows[] = inspection_draft_summary($draftRow);
+}
+
+sort_inspection_rows($inspectionRows);
+
     $metrics = db()->prepare(
         'SELECT
            COUNT(*) AS total,

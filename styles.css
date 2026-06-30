@@ -1117,6 +1117,32 @@ button:focus-visible {
   outline: 1px solid var(--placeholder);
 }
 
+.check-status.is-progress {
+  background: #fff2cc;
+  color: #6d5300;
+  outline: 1px solid #e2c96f;
+}
+
+.dashboard-check-row.is-in-progress:disabled,
+.check-row.is-in-progress:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.check-row .check-status {
+  color: inherit;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.check-row .check-status.is-progress {
+  color: #6d5300;
+}
+
+.check-row .check-status.is-ok {
+  color: var(--text);
+}
+
 .metric-label-row p,
 .section-title-row h2 {
   min-width: 0;
@@ -1847,6 +1873,21 @@ button:focus-visible {
   color: var(--placeholder);
   font-size: 22px;
   line-height: 1;
+}
+
+.check-row span.check-status {
+  color: var(--text);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.check-row span.check-status.is-progress {
+  color: #6d5300;
+}
+
+.inspection-form [aria-invalid="true"] {
+  outline: 2px solid #b3261e;
+  outline-offset: 1px;
 }
 
 .summary-actions {

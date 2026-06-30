@@ -44,6 +44,19 @@ if (!count($items)) {
     respond(422, ['error' => 'Inspection items are required.']);
 }
 
+foreach ($items as $item) {
+    $typeMark = trim((string)(isset($item['typeMark']) ? $item['typeMark'] : (isset($item['name']) ? $item['name'] : '')));
+    $result = trim((string)(isset($item['result']) ? $item['result'] : ''));
+
+    if ($typeMark === '' || $result === '') {
+        respond(422, ['error' => 'Type, mark and inspection result are required for every extinguisher.']);
+    }
+
+    if (empty($item['checked'])) {
+        respond(422, ['error' => 'Every extinguisher must be checked before completing the inspection.']);
+    }
+}
+
 $objectStatement = db()->prepare(
     'SELECT objects.*, organizations.name AS organization_name, contractor_links.contractor_name
      FROM objects

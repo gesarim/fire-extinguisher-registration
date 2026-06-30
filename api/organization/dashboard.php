@@ -55,6 +55,27 @@ if (count($checkRows)) {
     unset($checkRow);
 }
 
+$checkRows = completed_inspection_rows($checkRows);
+$drafts = db()->prepare(
+    'SELECT contractor_inspection_drafts.*, contractor_links.contractor_name, objects.name AS object_name
+     FROM contractor_inspection_drafts
+     INNER JOIN objects ON objects.id = contractor_inspection_drafts.object_id
+     LEFT JOIN contractor_links
+       ON contractor_links.contractor_user_id = contractor_inspection_drafts.contractor_user_id
+      AND contractor_links.organization_id = contractor_inspection_drafts.organization_id
+     WHERE contractor_inspection_drafts.organization_id = :organization_id
+     ORDER BY contractor_inspection_drafts.updated_at DESC
+     LIMIT 10'
+);
+$drafts->execute(['organization_id' => $organization['id']]);
+
+foreach ($drafts->fetchAll() as $draftRow) {
+    $checkRows[] = inspection_draft_summary($draftRow);
+}
+
+sort_inspection_rows($checkRows);
+$checkRows = array_slice($checkRows, 0, 5);
+
 $upcoming = db()->prepare(
     'SELECT
        inspection_requests.id,
