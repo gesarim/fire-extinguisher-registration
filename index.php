@@ -643,6 +643,6 @@
       </section>
     </main>
 
-    <script src="./script.js?v=20260630-problem-card-1"></script>
+    <script src="./script.js?v=20260630-no-print-1"></script>
   </body>
 </html>

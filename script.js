@@ -1344,7 +1344,6 @@ function renderObjectSummary() {
     zone.innerHTML = `
       <div class="fire-zone-head">
         <h3>Таблица огнетушителей</h3>
-        <button type="button" class="document-action" data-print-extinguisher-table>Печать</button>
       </div>
       <div class="extinguisher-table"></div>
     `;
@@ -1371,9 +1370,6 @@ function renderObjectSummary() {
       `;
       line.addEventListener("click", () => openExtinguisherDetail(extinguisher.id));
       table.append(line);
-    });
-    zone.querySelector("[data-print-extinguisher-table]").addEventListener("click", () => {
-      window.print();
     });
     structurePanel.append(zone);
   }
