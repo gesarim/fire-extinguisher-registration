@@ -1321,7 +1321,10 @@ function renderObjectSummary() {
         <div class="extinguisher-card-main">
           <span class="extinguisher-card-number">№ ${escapeHtml(getExtinguisherNumber(extinguisher) || "Не указан")}</span>
           <strong class="extinguisher-card-name">${escapeHtml(getExtinguisherTypeMark(extinguisher) || "Наименование не указано")}</strong>
-          <span class="extinguisher-card-place">${escapeHtml(formatExtinguisherPlace(extinguisher) || "Место установки не указано")}</span>
+          <span class="extinguisher-card-place">
+            <span>${escapeHtml(formatExtinguisherPlace(extinguisher) || "Помещение не указано")}</span>
+            ${getExtinguisherExactPlace(extinguisher) ? `<span class="extinguisher-card-exact-place">${escapeHtml(getExtinguisherExactPlace(extinguisher))}</span>` : ""}
+          </span>
         </div>
         <strong class="extinguisher-status${statusClass}">${escapeHtml(statusText)}</strong>
         <span class="extinguisher-card-arrow" aria-hidden="true">›</span>
@@ -1688,7 +1691,8 @@ function openCheckDetail(inspection, returnView = "objectSummary") {
       row.innerHTML = `
         <span>
           <strong>Огнетушитель № ${escapeHtml(item.number)}</strong>
-          <small>${escapeHtml(item.place || "Место не указано")}</small>
+          <small>${escapeHtml(item.place || "Помещение не указано")}</small>
+          ${getInspectionItemExactPlace(item) ? `<small>${escapeHtml(getInspectionItemExactPlace(item))}</small>` : ""}
           <small>${escapeHtml(item.check_type || "Проверка")} · ${escapeHtml(item.result || "Результат не указан")}</small>
           <small>Работы: ${escapeHtml(formatInspectionWorkTypes(item))}</small>
           ${item.comment ? `<small>Комментарий: ${escapeHtml(item.comment)}</small>` : ""}
@@ -1850,9 +1854,13 @@ function renderAddExtinguisherDetailsForm() {
       <input type="text" placeholder="ДД.ММ.ГГГГ" aria-label="Дата размещения огнетушителя на объекте защиты" data-add-ext-placement-date />
     </label>
     <label class="inspection-field">
-      <span>Место установки огнетушителя</span>
-      <input type="text" placeholder="Введите место установки" aria-label="Место установки" list="addExtinguisherPlaceList" data-add-ext-place />
+      <span>Помещение</span>
+      <input type="text" placeholder="Например: склад или кабинет 12" aria-label="Помещение" list="addExtinguisherPlaceList" data-add-ext-place />
       <datalist id="addExtinguisherPlaceList" data-add-ext-place-list></datalist>
+    </label>
+    <label class="inspection-field">
+      <span>Точное место</span>
+      <input type="text" placeholder="Например: у входа, справа от двери" aria-label="Точное место" data-add-ext-exact-place />
     </label>
     <label class="inspection-field">
       <span>Тип и марка огнетушителя</span>
@@ -1909,6 +1917,7 @@ function getAddExtinguisherDetails() {
     buildingName: selectedPlace?.dataset.buildingName || "",
     place,
     manualPlace: selectedPlace ? "" : place,
+    exactPlace: addExtinguisherFormFields.querySelector("[data-add-ext-exact-place]")?.value.trim() || "",
     number: assignedNumber,
     assignedNumber,
     name,
@@ -3436,6 +3445,7 @@ saveExtinguisherButton.addEventListener("click", async () => {
       fireZone: details.fireZone,
       buildingName: details.buildingName,
       manualPlace: details.manualPlace,
+      exactPlace: details.exactPlace,
       number,
       name: details.name,
       typeMark: details.typeMark,
@@ -3884,6 +3894,7 @@ function applyContractorInspectionDraft(objectId) {
     room_id: item.roomId,
     number: item.number,
     room_name: item.place,
+    exact_place: item.exactPlace || item.exact_place || "",
     name: item.name,
     typeMark: item.typeMark || item.name,
     status: item.decommissioned ? "decommissioned" : item.result === "Требует ремонта" || item.result === "Требуется замена" ? "broken" : item.result === "Требует перезарядки" ? "needs_check" : "ok",
@@ -3960,6 +3971,26 @@ function formatExtinguisherPlace(extinguisher) {
   return [extinguisher.room_name, extinguisher.floor_name, extinguisher.fire_zone]
     .filter(Boolean)
     .join(", ");
+}
+
+function getExtinguisherExactPlace(extinguisher) {
+  return extinguisher?.exact_place || extinguisher?.exactPlace || "";
+}
+
+function getInspectionItemExactPlace(item) {
+  return item?.exact_place || item?.exactPlace || "";
+}
+
+function formatExtinguisherFullPlace(extinguisher, separator = "\n") {
+  return [formatExtinguisherPlace(extinguisher), getExtinguisherExactPlace(extinguisher)]
+    .filter(Boolean)
+    .join(separator);
+}
+
+function formatInspectionItemFullPlace(item, separator = "\n") {
+  return [item?.place || "", getInspectionItemExactPlace(item)]
+    .filter(Boolean)
+    .join(separator);
 }
 
 function getExtinguisherStatusText(status) {
@@ -4041,7 +4072,7 @@ function getExtinguisherHistory(extinguisher) {
     const details = parseEventDetails(event.details);
     const inspectionId = String(details.inspectionId || "");
     const inspectionLabel = details.checkType || details.inspectionType || "";
-    const eventResult = details.result || details.title || details.place || "";
+    const eventResult = details.result || details.title || formatInspectionItemFullPlace(details, ", ") || "";
 
     if (inspectionId) {
       inspectionEventIds.add(inspectionId);
@@ -4069,7 +4100,7 @@ function getExtinguisherHistory(extinguisher) {
       at: extinguisher.placement_date || extinguisher.created_at || "",
       actor: extinguisher.responsible_person || "Не указано",
       actorRole: "organization",
-      details: formatExtinguisherPlace(extinguisher) || "Место не указано",
+      details: formatExtinguisherFullPlace(extinguisher, ", ") || "Место не указано",
       source: "Карточка огнетушителя",
     });
   }
@@ -4167,7 +4198,8 @@ function renderExtinguisherDetail(extinguisher) {
   const decommissioned = getLifecycleEvent(history, (event) => event.type === "decommissioned" || /снят/ui.test(event.title));
   const replaced = getLifecycleEvent(history, (event) => event.type === "replaced" || /заменен/ui.test(event.title));
   const replacementRequired = getLifecycleEvent(history, (event) => event.type === "replacement_required" || /замен/ui.test(event.title));
-  const place = formatExtinguisherPlace(extinguisher) || "Место не указано";
+  const place = formatExtinguisherPlace(extinguisher) || "Помещение не указано";
+  const exactPlace = getExtinguisherExactPlace(extinguisher);
   const statusText = getExtinguisherStatusText(extinguisher.status);
   const statusClass = ["broken", "decommissioned"].includes(extinguisher.status) ? " is-dark" : "";
   const historyMarkup = history.length
@@ -4193,7 +4225,7 @@ function renderExtinguisherDetail(extinguisher) {
       <dl class="extinguisher-passport-grid">
         <div><dt>Номер присвоенный</dt><dd>${escapeHtml(getExtinguisherNumber(extinguisher) || "Не указан")}</dd></div>
         <div><dt>Дата размещения</dt><dd>${escapeHtml(extinguisher.placement_date || "Не указана")}</dd></div>
-        <div><dt>Место установки</dt><dd>${escapeHtml(place)}</dd></div>
+        <div><dt>Место установки</dt><dd class="extinguisher-place-lines"><span>${escapeHtml(place)}</span>${exactPlace ? `<span>${escapeHtml(exactPlace)}</span>` : ""}</dd></div>
         <div><dt>Тип и марка</dt><dd>${escapeHtml(getExtinguisherTypeMark(extinguisher) || "Не указаны")}</dd></div>
         <div><dt>Завод-изготовитель</dt><dd>${escapeHtml(extinguisher.manufacturer || "Не указан")}</dd></div>
         <div><dt>Заводской номер</dt><dd>${escapeHtml(extinguisher.factory_number || extinguisher.factoryNumber || "Не указан")}</dd></div>
@@ -4322,24 +4354,25 @@ function downloadExtinguisherHistoryExcel() {
 }
 
 function wrapCanvasText(context, text, maxWidth) {
-  const words = String(text || "").split(/\s+/).filter(Boolean);
   const lines = [];
-  let line = "";
 
-  words.forEach((word) => {
-    const nextLine = line ? `${line} ${word}` : word;
+  String(text || "").split(/\r?\n/).forEach((paragraph) => {
+    const words = paragraph.split(/\s+/).filter(Boolean);
+    let line = "";
 
-    if (context.measureText(nextLine).width <= maxWidth || !line) {
-      line = nextLine;
-    } else {
-      lines.push(line);
-      line = word;
-    }
-  });
+    words.forEach((word) => {
+      const nextLine = line ? `${line} ${word}` : word;
 
-  if (line) {
+      if (context.measureText(nextLine).width <= maxWidth || !line) {
+        line = nextLine;
+      } else {
+        lines.push(line);
+        line = word;
+      }
+    });
+
     lines.push(line);
-  }
+  });
 
   return lines.length ? lines : [""];
 }
@@ -4494,7 +4527,7 @@ function getObjectReportSections() {
       formatDate(inspection.completed_at || inspection.planned_at || inspection.created_at),
       getInspectionTitle(inspection),
       item.number || "",
-      item.place || "",
+      formatInspectionItemFullPlace(item),
       formatInspectionWorkTypes(item),
       item.result || "",
       item.comment || "",
@@ -4516,7 +4549,7 @@ function getObjectReportSections() {
       headers: ["Номер", "Место", "Тип и марка", "Производитель", "Заводской номер", "Дата изготовления", "Перезарядка", "Состояние", "Ответственный"],
       rows: extinguishers.map((item) => [
         getExtinguisherNumber(item),
-        formatExtinguisherPlace(item),
+        formatExtinguisherFullPlace(item),
         getExtinguisherTypeMark(item),
         item.manufacturer || "",
         item.factory_number || "",
@@ -4564,7 +4597,7 @@ function downloadObjectReportExcel() {
     <table>
       <thead><tr>${section.headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead>
       <tbody>
-        ${(section.rows.length ? section.rows : [["Нет данных"]]).map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`).join("")}
+        ${(section.rows.length ? section.rows : [["Нет данных"]]).map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell).replace(/\r?\n/g, "<br>")}</td>`).join("")}</tr>`).join("")}
       </tbody>
     </table>
   `).join("");
@@ -4641,7 +4674,7 @@ function downloadObjectReportPdf() {
 }
 
 const INSPECTION_REPORT_COLUMNS = [
-  "Номер и марка огнетушителя",
+  "Номер, марка и место установки огнетушителя",
   "Дата проведения испытания, перезарядки, ремонта; организация, проводившая техобслуживание или ремонт",
   "Выполненные работы",
   "Результаты осмотра и испытания на прочность",
@@ -4675,7 +4708,7 @@ function getInspectionReportRows(inspection) {
     const serviceText = [serviceDate, serviceOrg].filter(Boolean).join("; ");
 
     return [
-      [number ? `№ ${number}` : "", mark].filter(Boolean).join(", ") || "Не указано",
+      [[number ? `№ ${number}` : "", mark].filter(Boolean).join(", "), formatInspectionItemFullPlace(item)].filter(Boolean).join("\n") || "Не указано",
       serviceText || "Не указано",
       formatInspectionWorkTypes(item),
       item.result || "Не указано",
@@ -4723,7 +4756,7 @@ function downloadInspectionReportExcel(inspection) {
 
   const title = getInspectionReportTitle(inspection);
   const tableRows = rows.map((row) => `
-    <tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>
+    <tr>${row.map((cell) => `<td>${escapeHtml(cell).replace(/\r?\n/g, "<br>")}</td>`).join("")}</tr>
   `).join("");
   const html = `
     <!doctype html>
@@ -4864,6 +4897,7 @@ function mapExtinguisherToInspection(extinguisher) {
     roomId: extinguisher.room_id || "",
     number: extinguisher.number,
     place: formatExtinguisherPlace(extinguisher),
+    exactPlace: getExtinguisherExactPlace(extinguisher),
     name: typeMark,
     typeMark,
     placementDate: extinguisher.placement_date || extinguisher.placementDate || "",
@@ -4932,8 +4966,12 @@ function createContractorInspectionCard(data, isOpen = false) {
         <input type="text" value="${escapeHtml(data.placementDate || "")}" data-inspection-placement-date />
       </label>
       <label class="inspection-field">
-        <span>Место установки огнетушителя</span>
+        <span>Помещение</span>
         <input type="text" value="${escapeHtml(data.place || "")}" data-inspection-place />
+      </label>
+      <label class="inspection-field">
+        <span>Точное место</span>
+        <input type="text" value="${escapeHtml(data.exactPlace || data.exact_place || "")}" placeholder="Например: у входа, справа от двери" data-inspection-exact-place />
       </label>
       <label class="inspection-field">
         <span>Тип и марка огнетушителя</span>
@@ -5066,6 +5104,7 @@ function addContractorInspectionCard() {
     roomId: details.roomId,
     number,
     place: details.place,
+    exactPlace: details.exactPlace,
     name: details.name,
     typeMark: details.typeMark,
     placementDate: details.placementDate,
@@ -5114,6 +5153,7 @@ function collectContractorInspectionItems() {
       roomId: card.dataset.roomId || "",
       number,
       place: getValue("[data-inspection-place]"),
+      exactPlace: getValue("[data-inspection-exact-place]"),
       name: getValue("[data-inspection-name]"),
       typeMark: getValue("[data-inspection-name]"),
       placementDate: getValue("[data-inspection-placement-date]"),

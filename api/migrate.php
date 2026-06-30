@@ -45,6 +45,7 @@ $queries = [
       extinguisher_id BIGINT UNSIGNED NULL,
       number VARCHAR(120) NOT NULL,
       place VARCHAR(500) NULL,
+      exact_place VARCHAR(500) NULL,
       name VARCHAR(255) NULL,
       manufacturer VARCHAR(255) NULL,
       release_date VARCHAR(120) NULL,
@@ -131,6 +132,7 @@ add_column_if_missing('inspections', 'employee_name', 'VARCHAR(255) NULL');
 add_column_if_missing('inspections', 'inspection_type', 'VARCHAR(80) NULL');
 add_column_if_missing('files', 'uploaded_by_user_id', 'BIGINT UNSIGNED NULL');
 add_column_if_missing('extinguishers', 'type_mark', 'VARCHAR(255) NULL');
+add_column_if_missing('extinguishers', 'exact_place', 'VARCHAR(500) NULL');
 add_column_if_missing('extinguishers', 'manufacturer', 'VARCHAR(255) NULL');
 add_column_if_missing('extinguishers', 'factory_number', 'VARCHAR(120) NULL');
 add_column_if_missing('extinguishers', 'placement_date', 'VARCHAR(120) NULL');
@@ -140,6 +142,7 @@ add_column_if_missing('extinguishers', 'service_life', 'VARCHAR(120) NULL');
 add_column_if_missing('extinguishers', 'responsible_person', 'VARCHAR(255) NULL');
 add_column_if_missing('extinguishers', 'photo_file_id', 'BIGINT UNSIGNED NULL');
 add_column_if_missing('inspection_items', 'placement_date', 'VARCHAR(120) NULL');
+add_column_if_missing('inspection_items', 'exact_place', 'VARCHAR(500) NULL');
 add_column_if_missing('inspection_items', 'manufacture_date', 'VARCHAR(120) NULL');
 add_column_if_missing('inspection_items', 'next_recharge_date', 'VARCHAR(120) NULL');
 add_column_if_missing('inspection_items', 'service_life', 'VARCHAR(120) NULL');

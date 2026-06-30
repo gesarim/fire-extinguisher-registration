@@ -115,17 +115,18 @@ try {
 
     $insertExtinguisher = $pdo->prepare(
         'INSERT INTO extinguishers (
-            organization_id, object_id, room_id, number, name, type_mark, manufacturer, factory_number,
+            organization_id, object_id, room_id, exact_place, number, name, type_mark, manufacturer, factory_number,
             placement_date, manufacture_date, next_recharge_date, service_life, responsible_person, status, photo_file_id
          )
          VALUES (
-            :organization_id, :object_id, :room_id, :number, :name, :type_mark, :manufacturer, :factory_number,
+            :organization_id, :object_id, :room_id, :exact_place, :number, :name, :type_mark, :manufacturer, :factory_number,
             :placement_date, :manufacture_date, :next_recharge_date, :service_life, :responsible_person, :status, :photo_file_id
          )'
     );
     $updateExtinguisher = $pdo->prepare(
         'UPDATE extinguishers
          SET name = :name,
+             exact_place = :exact_place,
              type_mark = :type_mark,
              manufacturer = :manufacturer,
              factory_number = :factory_number,
@@ -140,13 +141,13 @@ try {
     );
     $insertItem = $pdo->prepare(
         'INSERT INTO inspection_items (
-            inspection_id, extinguisher_id, number, place, name, manufacturer, release_date, factory_number,
+            inspection_id, extinguisher_id, number, place, exact_place, name, manufacturer, release_date, factory_number,
             assigned_number, placement_date, manufacture_date, next_recharge_date, service_life, responsible_person,
             next_planned_test_date, recharge_date, otv_mark, post_recharge_result,
             mass, check_type, work_types, result, comment, photo_file_id
          )
          VALUES (
-            :inspection_id, :extinguisher_id, :number, :place, :name, :manufacturer, :release_date, :factory_number,
+            :inspection_id, :extinguisher_id, :number, :place, :exact_place, :name, :manufacturer, :release_date, :factory_number,
             :assigned_number, :placement_date, :manufacture_date, :next_recharge_date, :service_life, :responsible_person,
             :next_planned_test_date, :recharge_date, :otv_mark, :post_recharge_result,
             :mass, :check_type, :work_types, :result, :comment, :photo_file_id
@@ -172,6 +173,7 @@ try {
         $roomId = (int)(isset($item['roomId']) ? $item['roomId'] : 0);
         $number = trim((string)(isset($item['number']) ? $item['number'] : ''));
         $assignedNumber = trim((string)(isset($item['assignedNumber']) ? $item['assignedNumber'] : ''));
+        $exactPlace = trim((string)(isset($item['exactPlace']) ? $item['exactPlace'] : ''));
         $name = trim((string)(isset($item['name']) ? $item['name'] : ''));
         $typeMark = trim((string)(isset($item['typeMark']) ? $item['typeMark'] : $name));
         $manufacturer = trim((string)(isset($item['manufacturer']) ? $item['manufacturer'] : ''));
@@ -207,6 +209,7 @@ try {
                 'id' => $extinguisherId,
                 'organization_id' => $object['organization_id'],
                 'object_id' => $objectId,
+                'exact_place' => $exactPlace !== '' ? $exactPlace : null,
                 'name' => $name !== '' ? $name : null,
                 'type_mark' => $typeMark !== '' ? $typeMark : null,
                 'manufacturer' => $manufacturer !== '' ? $manufacturer : null,
@@ -224,6 +227,7 @@ try {
                 'organization_id' => $object['organization_id'],
                 'object_id' => $objectId,
                 'room_id' => $roomId > 0 && isset($allowedRoomIds[$roomId]) ? $roomId : null,
+                'exact_place' => $exactPlace !== '' ? $exactPlace : null,
                 'number' => $number,
                 'name' => $name !== '' ? $name : null,
                 'type_mark' => $typeMark !== '' ? $typeMark : null,
@@ -267,6 +271,7 @@ try {
             'details' => json_encode([
                 'number' => $number,
                 'place' => trim((string)(isset($item['place']) ? $item['place'] : '')),
+                'exactPlace' => $exactPlace,
                 'typeMark' => $typeMark,
                 'manufacturer' => $manufacturer,
                 'factoryNumber' => $factoryNumber,
@@ -294,6 +299,7 @@ try {
             'extinguisher_id' => $extinguisherId > 0 ? $extinguisherId : null,
             'number' => $number,
             'place' => trim((string)(isset($item['place']) ? $item['place'] : '')) ?: null,
+            'exact_place' => $exactPlace !== '' ? $exactPlace : null,
             'name' => $name !== '' ? $name : null,
             'manufacturer' => $manufacturer !== '' ? $manufacturer : null,
             'release_date' => $releaseDate !== '' ? $releaseDate : null,

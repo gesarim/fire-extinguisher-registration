@@ -63,6 +63,7 @@ function normalize_draft_items($items)
             'roomId' => (int)(isset($item['roomId']) ? $item['roomId'] : 0),
             'number' => $number !== '' ? $number : $assignedNumber,
             'place' => trim((string)(isset($item['place']) ? $item['place'] : '')),
+            'exactPlace' => trim((string)(isset($item['exactPlace']) ? $item['exactPlace'] : '')),
             'name' => trim((string)(isset($item['name']) ? $item['name'] : '')),
             'typeMark' => trim((string)(isset($item['typeMark']) ? $item['typeMark'] : (isset($item['name']) ? $item['name'] : ''))),
             'placementDate' => trim((string)(isset($item['placementDate']) ? $item['placementDate'] : '')),

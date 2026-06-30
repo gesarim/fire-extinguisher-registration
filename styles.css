@@ -1750,11 +1750,21 @@ button:focus-visible {
 .extinguisher-card-place {
   grid-column: 1 / -1;
   min-width: 0;
-  display: block;
+  display: grid;
+  gap: 2px;
   color: var(--placeholder);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.4;
+}
+
+.extinguisher-card-exact-place {
+  color: var(--text);
+}
+
+.extinguisher-place-lines {
+  display: grid;
+  gap: 4px;
 }
 
 .extinguisher-status {

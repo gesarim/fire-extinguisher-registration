@@ -16,6 +16,7 @@ $floorName = trim((string)(isset($input['floorName']) ? $input['floorName'] : ''
 $fireZone = trim((string)(isset($input['fireZone']) ? $input['fireZone'] : ''));
 $buildingName = trim((string)(isset($input['buildingName']) ? $input['buildingName'] : ''));
 $manualPlace = trim((string)(isset($input['manualPlace']) ? $input['manualPlace'] : ''));
+$exactPlace = trim((string)(isset($input['exactPlace']) ? $input['exactPlace'] : ''));
 $number = trim((string)(isset($input['number']) ? $input['number'] : ''));
 $name = trim((string)(isset($input['name']) ? $input['name'] : ''));
 $typeMark = trim((string)(isset($input['typeMark']) ? $input['typeMark'] : $name));
@@ -139,11 +140,11 @@ if ($resolvedRoomId === null && $manualPlace !== '') {
 
 $statement = db()->prepare(
     'INSERT INTO extinguishers (
-        organization_id, object_id, room_id, number, name, type_mark, manufacturer, factory_number,
+        organization_id, object_id, room_id, exact_place, number, name, type_mark, manufacturer, factory_number,
         placement_date, manufacture_date, next_recharge_date, service_life, responsible_person, status, photo_file_id
      )
      VALUES (
-        :organization_id, :object_id, :room_id, :number, :name, :type_mark, :manufacturer, :factory_number,
+        :organization_id, :object_id, :room_id, :exact_place, :number, :name, :type_mark, :manufacturer, :factory_number,
         :placement_date, :manufacture_date, :next_recharge_date, :service_life, :responsible_person, "ok", :photo_file_id
      )'
 );
@@ -151,6 +152,7 @@ $statement->execute([
     'organization_id' => $organization['id'],
     'object_id' => $objectId,
     'room_id' => $resolvedRoomId,
+    'exact_place' => $exactPlace !== '' ? $exactPlace : null,
     'number' => $number,
     'name' => $name !== '' ? $name : null,
     'type_mark' => $typeMark !== '' ? $typeMark : null,
@@ -182,6 +184,7 @@ $event->execute([
     'details' => json_encode([
         'number' => $number,
         'place' => $manualPlace,
+        'exactPlace' => $exactPlace,
         'typeMark' => $typeMark,
         'placementDate' => $placementDate,
         'manufacturer' => $manufacturer,

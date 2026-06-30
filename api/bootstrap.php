@@ -317,6 +317,7 @@ function ensure_sqlite_schema(PDO $pdo)
           organization_id INTEGER NOT NULL,
           object_id INTEGER NOT NULL,
           room_id INTEGER NULL,
+          exact_place TEXT NULL,
           number TEXT NOT NULL,
           name TEXT NULL,
           type_mark TEXT NULL,
@@ -402,6 +403,7 @@ function ensure_sqlite_schema(PDO $pdo)
           extinguisher_id INTEGER NULL,
           number TEXT NOT NULL,
           place TEXT NULL,
+          exact_place TEXT NULL,
           name TEXT NULL,
           manufacturer TEXT NULL,
           release_date TEXT NULL,
@@ -454,6 +456,19 @@ function ensure_sqlite_schema(PDO $pdo)
 
     if (!in_array('photo_file_id', $inspectionItemColumnNames, true)) {
         $pdo->exec('ALTER TABLE inspection_items ADD COLUMN photo_file_id INTEGER NULL REFERENCES files(id) ON DELETE SET NULL');
+    }
+
+    if (!in_array('exact_place', $inspectionItemColumnNames, true)) {
+        $pdo->exec('ALTER TABLE inspection_items ADD COLUMN exact_place TEXT NULL');
+    }
+
+    $extinguisherColumns = $pdo->query('PRAGMA table_info(extinguishers)')->fetchAll(PDO::FETCH_ASSOC);
+    $extinguisherColumnNames = array_map(function ($column) {
+        return $column['name'];
+    }, $extinguisherColumns);
+
+    if (!in_array('exact_place', $extinguisherColumnNames, true)) {
+        $pdo->exec('ALTER TABLE extinguishers ADD COLUMN exact_place TEXT NULL');
     }
 
     $fileColumns = $pdo->query('PRAGMA table_info(files)')->fetchAll(PDO::FETCH_ASSOC);
