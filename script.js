@@ -1690,7 +1690,7 @@ function openCheckDetail(inspection, returnView = "objectSummary") {
       row.className = "check-detail-row";
       row.innerHTML = `
         <span>
-          <strong>Огнетушитель № ${escapeHtml(item.number)}</strong>
+          <strong>${escapeHtml(formatExtinguisherTitle(item))}</strong>
           <small>${escapeHtml(item.place || "Помещение не указано")}</small>
           ${getInspectionItemExactPlace(item) ? `<small>${escapeHtml(getInspectionItemExactPlace(item))}</small>` : ""}
           <small>${escapeHtml(item.check_type || "Проверка")} · ${escapeHtml(item.result || "Результат не указан")}</small>
@@ -2041,7 +2041,7 @@ function syncObjectForms() {
     addIssueScreen.querySelector("select[aria-label='Выбрать огнетушитель']"),
     "Выбрать огнетушитель",
     extinguishers,
-    (extinguisher) => `Огнетушитель № ${extinguisher.number}`
+    (extinguisher) => formatExtinguisherTitle(extinguisher)
   );
 }
 
@@ -3932,6 +3932,7 @@ function bindInspectionEditButtons(card) {
     try {
       await saveCurrentContractorInspectionDraft();
       saveInspectionFormState(form);
+      updateInspectionCardTitle(card);
       card.dataset.savedPhotoFileId = card.dataset.photoFileId || "";
       const toggle = card.querySelector(".inspection-card-toggle");
       card.classList.remove("is-open");
@@ -3948,6 +3949,7 @@ function bindInspectionEditButtons(card) {
   cancelButton.addEventListener("click", () => {
     resetInspectionFormState(form);
     updateInspectionRechargeDateVisibility(card);
+    updateInspectionCardTitle(card);
     const photoContainer = card.querySelector(".photo-upload");
     const savedPhotoFileId = Number(card.dataset.savedPhotoFileId || 0);
 
@@ -4020,6 +4022,12 @@ function getExtinguisherManufactureDate(extinguisher) {
 
 function getExtinguisherNumber(extinguisher) {
   return extinguisher.assigned_number || extinguisher.assignedNumber || extinguisher.number || "";
+}
+
+function formatExtinguisherTitle(extinguisher) {
+  const number = getExtinguisherNumber(extinguisher) || "без номера";
+  const typeMark = getExtinguisherTypeMark(extinguisher);
+  return [`Огнетушитель № ${number}`, typeMark].filter(Boolean).join(" · ");
 }
 
 function parseEventDetails(details) {
@@ -4215,7 +4223,7 @@ function renderExtinguisherDetail(extinguisher) {
       `).join("")
     : `<li class="extinguisher-history-item is-empty"><strong>История пока пустая</strong><small>События появятся после добавления, проверки или изменения огнетушителя.</small></li>`;
 
-  extinguisherDetailTitle.textContent = `Огнетушитель № ${getExtinguisherNumber(extinguisher) || "без номера"}`;
+  extinguisherDetailTitle.textContent = formatExtinguisherTitle(extinguisher);
   extinguisherDetailContent.innerHTML = `
     <section class="extinguisher-passport">
       <div class="extinguisher-passport-head">
@@ -4956,10 +4964,24 @@ function updateInspectionRechargeDateVisibility(card) {
   }
 }
 
+function updateInspectionCardTitle(card) {
+  const title = card.querySelector("[data-inspection-card-title]");
+  const assignedNumber = card.querySelector("[data-inspection-assigned-number]")?.value.trim();
+  const typeMark = card.querySelector("[data-inspection-name]")?.value.trim();
+
+  if (title) {
+    title.textContent = formatExtinguisherTitle({
+      number: assignedNumber || card.dataset.number || "",
+      typeMark,
+    });
+  }
+}
+
 function createContractorInspectionCard(data, isOpen = false) {
   const number = data.number || "001";
   const card = document.createElement("article");
   card.className = `inspection-card${isOpen ? " is-open" : ""}`;
+  card.dataset.number = number;
   card.dataset.extinguisherId = data.id || "";
   card.dataset.roomId = data.roomId || "";
   card.dataset.photoFileId = data.photoFileId || data.photo_file_id || "";
@@ -4974,7 +4996,7 @@ function createContractorInspectionCard(data, isOpen = false) {
   `).join("");
   card.innerHTML = `
     <button type="button" class="inspection-card-toggle" aria-expanded="${isOpen ? "true" : "false"}">
-      <span>Огнетушитель № ${escapeHtml(number)}</span>
+      <span data-inspection-card-title>${escapeHtml(formatExtinguisherTitle({ number: data.assignedNumber || number, typeMark: data.typeMark || data.name || "" }))}</span>
       <span class="inspection-card-arrow" aria-hidden="true">›</span>
     </button>
     <div class="extinguisher-form inspection-form" ${isOpen ? "" : "hidden"}>
@@ -5096,7 +5118,11 @@ function createContractorInspectionCard(data, isOpen = false) {
   card.querySelectorAll("[data-inspection-work-type]").forEach((input) => {
     input.addEventListener("change", () => updateInspectionRechargeDateVisibility(card));
   });
+  card.querySelectorAll("[data-inspection-assigned-number], [data-inspection-name]").forEach((input) => {
+    input.addEventListener("input", () => updateInspectionCardTitle(card));
+  });
   updateInspectionRechargeDateVisibility(card);
+  updateInspectionCardTitle(card);
 
   return card;
 }
@@ -5169,9 +5195,8 @@ function addContractorInspectionCard() {
 
 function collectContractorInspectionItems() {
   return Array.from(inspectionList.querySelectorAll(".inspection-card")).map((card) => {
-    const toggleText = card.querySelector(".inspection-card-toggle span:first-child")?.textContent || "";
-    const number = toggleText.replace("Огнетушитель №", "").trim();
     const getValue = (selector) => card.querySelector(selector)?.value.trim() || "";
+    const number = card.dataset.number || getValue("[data-inspection-assigned-number]");
 
     return {
       id: card.dataset.extinguisherId || "",
