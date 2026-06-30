@@ -1542,12 +1542,12 @@ function renderObjectEditExtinguishers(formElement, extinguishers) {
       </div>
       <div class="object-edit-grid">
         <input type="text" placeholder="Номер огнетушителя" aria-label="Номер огнетушителя" data-edit-ext-number />
-        <input type="text" placeholder="Название / ФИО" aria-label="Название / ФИО" data-edit-ext-name />
+        <input type="text" placeholder="Например: ОП-4" aria-label="Тип и марка огнетушителя" data-edit-ext-name />
       </div>
       <select aria-label="Место установки" data-edit-ext-room></select>
     `;
     card.querySelector("[data-edit-ext-number]").value = extinguisher.number || "";
-    card.querySelector("[data-edit-ext-name]").value = extinguisher.name || "";
+    card.querySelector("[data-edit-ext-name]").value = getExtinguisherTypeMark(extinguisher);
     card.querySelector("[data-edit-ext-room]").dataset.selectedRoomKey = extinguisher.room_id ? `room:${extinguisher.room_id}` : "";
     list.append(card);
   });
