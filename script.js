@@ -4597,13 +4597,14 @@ function downloadObjectReportExcel() {
     <table>
       <thead><tr>${section.headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead>
       <tbody>
-        ${(section.rows.length ? section.rows : [["Нет данных"]]).map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell).replace(/\r?\n/g, "<br>")}</td>`).join("")}</tr>`).join("")}
+        ${(section.rows.length ? section.rows : [["Нет данных"]]).map((row) => `<tr>${row.map((cell, index) => `<td${section.headers[index] === "Выполненные работы" ? ' class="work-types-cell"' : ""}>${escapeHtml(cell).replace(/\r?\n/g, "<br>")}</td>`).join("")}</tr>`).join("")}
       </tbody>
     </table>
   `).join("");
   const html = `<!doctype html><html><head><meta charset="utf-8"><style>
     body{font-family:Arial,sans-serif}table{border-collapse:collapse;width:100%;margin:0 0 24px}
     th,td{border:1px solid #999;padding:8px;vertical-align:top;mso-number-format:"\\@"}th{background:#f2f2f2}
+    .work-types-cell{white-space:nowrap}
   </style></head><body><h1>Сводка по объекту: ${escapeHtml(objectName)}</h1>${body}</body></html>`;
   downloadBlob(new Blob(["\ufeff", html], { type: "application/vnd.ms-excel;charset=utf-8" }), `${getSafeFileName(`Сводка-${objectName}`)}.xls`);
 }
@@ -4756,7 +4757,7 @@ function downloadInspectionReportExcel(inspection) {
 
   const title = getInspectionReportTitle(inspection);
   const tableRows = rows.map((row) => `
-    <tr>${row.map((cell) => `<td>${escapeHtml(cell).replace(/\r?\n/g, "<br>")}</td>`).join("")}</tr>
+    <tr>${row.map((cell, index) => `<td${index === 2 ? ' class="work-types-cell"' : ""}>${escapeHtml(cell).replace(/\r?\n/g, "<br>")}</td>`).join("")}</tr>
   `).join("");
   const html = `
     <!doctype html>
@@ -4768,6 +4769,7 @@ function downloadInspectionReportExcel(inspection) {
           table { border-collapse: collapse; width: 100%; }
           th, td { border: 1px solid #6fc7a3; padding: 8px; vertical-align: top; mso-number-format:"\\@"; }
           th { color: #1b9d6c; font-weight: 700; text-align: center; }
+          .work-types-cell { white-space: nowrap; }
         </style>
       </head>
       <body>

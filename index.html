@@ -643,6 +643,6 @@
       </section>
     </main>
 
-    <script src="./script.js?v=20260630-location-2"></script>
+    <script src="./script.js?v=20260630-work-types-1"></script>
   </body>
 </html>
