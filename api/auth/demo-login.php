@@ -185,29 +185,18 @@ function ensure_demo_stock_object($pdo, $organizationId)
     $objects = $objectCheck->fetchAll();
 
     if (count($objects)) {
-        $objectId = (int)$objects[0]['id'];
-        $updateObject = $pdo->prepare('UPDATE objects SET address = "Демо-склад" WHERE id = :id');
-        $updateObject->execute(['id' => $objectId]);
-
-        $deleteObject = $pdo->prepare(
-            'DELETE FROM objects
-             WHERE id = :id AND organization_id = :organization_id AND name = "СКЛАД" AND COALESCE(address, "") = "Демо-склад"'
-        );
-
-        foreach (array_slice($objects, 1) as $duplicateObject) {
-            $deleteObject->execute([
-                'id' => (int)$duplicateObject['id'],
-                'organization_id' => $organizationId,
-            ]);
-        }
-    } else {
-        $insertObject = $pdo->prepare(
-            'INSERT INTO objects (organization_id, name, address)
-             VALUES (:organization_id, "СКЛАД", "Демо-склад")'
-        );
-        $insertObject->execute(['organization_id' => $organizationId]);
-        $objectId = (int)$pdo->lastInsertId();
+        // Демо-вход создает стартовые данные только один раз. После этого объект
+        // полностью принадлежит пользователям: не восстанавливаем номера,
+        // помещения или адрес поверх внесенных ими изменений.
+        return (int)$objects[0]['id'];
     }
+
+    $insertObject = $pdo->prepare(
+        'INSERT INTO objects (organization_id, name, address)
+         VALUES (:organization_id, "СКЛАД", "Демо-склад")'
+    );
+    $insertObject->execute(['organization_id' => $organizationId]);
+    $objectId = (int)$pdo->lastInsertId();
 
     $roomCheck = $pdo->prepare(
         'SELECT id FROM rooms
