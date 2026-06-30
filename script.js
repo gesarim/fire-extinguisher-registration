@@ -641,6 +641,11 @@ function getObjectStatus(object) {
   const broken = toNumber(object.broken_total);
   const needsCheck = toNumber(object.needs_check_total);
   const total = toNumber(object.extinguishers_total);
+  const problemType = getObjectProblemType(object);
+
+  if (problemType) {
+    return problemType;
+  }
 
   if (!total) {
     return "огнетушителей пока нет";
@@ -655,6 +660,20 @@ function getObjectStatus(object) {
   }
 
   return `${total} огнетушителей · все в норме`;
+}
+
+function getObjectProblemType(object) {
+  const title = String(object?.latest_issue_title || "").trim();
+
+  if (!title) {
+    return "";
+  }
+
+  return title.replace(/^Огнетушитель\s+№\s*[^:]+:\s*/ui, "");
+}
+
+function hasObjectProblem(object) {
+  return Boolean(getObjectProblemType(object));
 }
 
 function resetObjectForm() {
@@ -688,7 +707,7 @@ function renderDashboard() {
     objects.forEach((object) => {
       const row = document.createElement("button");
       row.type = "button";
-      row.className = "dashboard-object-row";
+      row.className = `dashboard-object-row${hasObjectProblem(object) ? " is-problem" : ""}`;
       row.innerHTML = `
         <span>
           <strong>${escapeHtml(object.name)}</strong>
@@ -764,6 +783,11 @@ function getContractorObjectStatus(object) {
   const pending = toNumber(object.pending_requests);
   const replacements = toNumber(object.replacement_total);
   const needsCheck = toNumber(object.needs_check_total);
+  const problemType = getObjectProblemType(object);
+
+  if (problemType) {
+    return problemType;
+  }
 
   if (pending > 0) {
     return "Требуется проверка";
@@ -872,14 +896,16 @@ function renderSummary() {
   } else {
     objects.forEach((object) => {
       const hasNoExtinguishers = toNumber(object.extinguishers_total) === 0;
+      const problemType = getObjectProblemType(object);
       const row = document.createElement("button");
       row.type = "button";
-      row.className = `summary-object-row${hasNoExtinguishers ? " is-warning" : ""}`;
+      row.className = `summary-object-row${hasNoExtinguishers ? " is-warning" : ""}${problemType ? " is-problem" : ""}`;
       row.innerHTML = `
         <span>
           <strong>${escapeHtml(object.name)}</strong>
           <small>${escapeHtml(object.address || "Адрес не указан")}</small>
           <small>${toNumber(object.rooms_total)} помещений · ${toNumber(object.extinguishers_total)} огнетушителей · ${toNumber(object.open_issues_total)} проблем</small>
+          ${problemType ? `<small class="summary-object-problem">${escapeHtml(problemType)}</small>` : ""}
           ${hasNoExtinguishers ? '<small class="summary-object-warning">Нужно ввести огнетушители в эксплуатацию</small>' : ""}
         </span>
         <span aria-hidden="true">›</span>
@@ -1040,13 +1066,13 @@ async function loadContractorAccount() {
 
 function renderObjectCard(object) {
   const card = document.createElement("article");
-  card.className = "object-card";
   const issues = object.issues || [];
   const checks = object.checks || [];
   const issueCount = Math.max(
     issues.length,
     toNumber(object.broken_total) + toNumber(object.needs_check_total)
   );
+  card.className = `object-card${issueCount > 0 ? " is-problem" : ""}`;
   const problemLabel = issueCount === 1 ? "Обнаружена 1 проблема" : `Обнаружено проблем: ${issueCount}`;
   card.innerHTML = `
     <h2>${escapeHtml(object.name)}</h2>
@@ -1157,7 +1183,7 @@ async function loadObjects() {
 function renderContractorObjectCard(object, actionLabel = "Начать проверку") {
   const card = document.createElement("article");
   const status = getContractorObjectStatus(object);
-  card.className = "contractor-object-card";
+  card.className = `contractor-object-card${hasObjectProblem(object) ? " is-problem" : ""}`;
   card.innerHTML = `
     <div class="contractor-object-head">
       <div>

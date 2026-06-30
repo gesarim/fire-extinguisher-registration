@@ -15,6 +15,13 @@ $statement = db()->prepare(
        SUM(extinguishers.status = "needs_check") AS needs_check_total,
        SUM(extinguishers.status IN ("broken", "decommissioned")) AS replacement_total,
        (
+         SELECT issues.title
+         FROM issues
+         WHERE issues.object_id = objects.id AND issues.status = "open"
+         ORDER BY issues.created_at DESC
+         LIMIT 1
+       ) AS latest_issue_title,
+       (
          SELECT COUNT(*)
          FROM inspection_requests
          WHERE inspection_requests.object_id = objects.id

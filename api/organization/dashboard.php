@@ -9,7 +9,14 @@ $objects = db()->prepare(
     'SELECT objects.id, objects.name,
       COUNT(extinguishers.id) AS extinguishers_total,
       SUM(extinguishers.status = "needs_check") AS needs_check_total,
-      SUM(extinguishers.status IN ("broken", "decommissioned")) AS broken_total
+      SUM(extinguishers.status IN ("broken", "decommissioned")) AS broken_total,
+      (
+        SELECT issues.title
+        FROM issues
+        WHERE issues.object_id = objects.id AND issues.status = "open"
+        ORDER BY issues.created_at DESC
+        LIMIT 1
+      ) AS latest_issue_title
      FROM objects
      LEFT JOIN extinguishers ON extinguishers.object_id = objects.id
      WHERE objects.organization_id = :organization_id

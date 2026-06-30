@@ -1046,6 +1046,18 @@ button:focus-visible {
   line-height: 1;
 }
 
+.dashboard-object-row.is-problem,
+.summary-object-row.is-problem {
+  background: #fff1f0;
+  outline: 1px solid rgba(179, 38, 30, 0.45);
+}
+
+.dashboard-object-row.is-problem small,
+.summary-object-problem {
+  color: #9f211b;
+  font-weight: 650;
+}
+
 .summary-object-row.is-warning {
   outline: 1px solid rgba(199, 53, 47, 0.35);
 }
@@ -1300,6 +1312,11 @@ button:focus-visible {
   padding: 14px;
 }
 
+.object-card.is-problem {
+  background: #fff8f7;
+  outline: 1px solid rgba(179, 38, 30, 0.4);
+}
+
 .contractor-objects-list {
   display: grid;
   gap: 8px;
@@ -1316,6 +1333,23 @@ button:focus-visible {
   border-radius: var(--radius);
   background: var(--control);
   padding: 16px;
+}
+
+.contractor-object-card.is-problem {
+  background: #fff1f0;
+  outline: 1px solid rgba(179, 38, 30, 0.45);
+}
+
+.contractor-object-card.is-problem .contractor-object-head > span {
+  max-width: 240px;
+  min-height: 32px;
+  justify-content: center;
+  background: #b3261e;
+  color: #fff;
+  line-height: 1.25;
+  padding-block: 7px;
+  text-align: center;
+  white-space: normal;
 }
 
 .contractor-object-head {

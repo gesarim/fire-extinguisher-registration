@@ -32,7 +32,10 @@ $objects = db()->prepare(
        (SELECT COUNT(*) FROM extinguishers
         WHERE extinguishers.organization_id = :organization_id AND extinguishers.object_id = objects.id AND extinguishers.status IN ("broken", "decommissioned")) AS broken_total,
        (SELECT COUNT(*) FROM issues
-        WHERE issues.organization_id = :organization_id AND issues.object_id = objects.id AND issues.status = "open") AS open_issues_total
+        WHERE issues.organization_id = :organization_id AND issues.object_id = objects.id AND issues.status = "open") AS open_issues_total,
+       (SELECT issues.title FROM issues
+        WHERE issues.organization_id = :organization_id AND issues.object_id = objects.id AND issues.status = "open"
+        ORDER BY issues.created_at DESC LIMIT 1) AS latest_issue_title
      FROM objects
      WHERE objects.organization_id = :organization_id
      ORDER BY objects.created_at DESC'
