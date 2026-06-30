@@ -4561,6 +4561,18 @@ function downloadExtinguisherHistoryExcel() {
           <td>${escapeHtml(value)}</td>
         </tr>
       `).join("");
+  const historyRows = getExtinguisherHistoryRows();
+  const historyTableRows = historyRows.length
+    ? historyRows.map((row) => `
+        <tr>
+          <td>${escapeHtml(row.date)}</td>
+          <td>${escapeHtml(row.action)}</td>
+          <td>${escapeHtml(row.actor)}</td>
+          <td>${escapeHtml(row.details)}</td>
+          <td>${escapeHtml(row.source)}</td>
+        </tr>
+      `).join("")
+    : '<tr><td colspan="5">История изменений пока пустая</td></tr>';
   const html = `
     <!doctype html>
     <html>
@@ -4569,15 +4581,36 @@ function downloadExtinguisherHistoryExcel() {
         <style>
           body { font-family: Arial, sans-serif; color: #242424; }
           h1 { margin: 0 0 18px; color: #38a979; font-size: 18pt; font-weight: 500; }
+          h2 { margin: 28px 0 12px; color: #242424; font-size: 16pt; }
           table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-          td { border: 1.5pt solid #42b883; padding: 8px 10px; vertical-align: middle; font-size: 12pt; }
-          td.label { width: 56%; color: #269c6a; font-weight: 600; }
+          .a1-table td { border: 1.5pt solid #42b883; padding: 8px 10px; vertical-align: middle; font-size: 12pt; }
+          .a1-table td.label { width: 56%; color: #269c6a; font-weight: 600; }
+          .history-table th, .history-table td { border: 1pt solid #aeb4b1; padding: 7px 8px; vertical-align: top; font-size: 10pt; }
+          .history-table th { background: #e8f7f0; color: #207d58; font-weight: 700; }
+          .history-table th:nth-child(1) { width: 14%; }
+          .history-table th:nth-child(2) { width: 19%; }
+          .history-table th:nth-child(3) { width: 18%; }
+          .history-table th:nth-child(4) { width: 34%; }
+          .history-table th:nth-child(5) { width: 15%; }
         </style>
       </head>
       <body>
         <h1>Таблица А.1</h1>
-        <table>
+        <table class="a1-table">
           <tbody>${tableRows}</tbody>
+        </table>
+        <h2>История изменений</h2>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Дата и время</th>
+              <th>Событие</th>
+              <th>Кем</th>
+              <th>Детали</th>
+              <th>Источник</th>
+            </tr>
+          </thead>
+          <tbody>${historyTableRows}</tbody>
         </table>
       </body>
     </html>
@@ -4611,8 +4644,8 @@ function wrapCanvasText(context, text, maxWidth) {
 }
 
 function buildHistoryPdfCanvases(extinguisher, rows) {
-  const width = 1240;
-  const height = 1754;
+  const width = 1754;
+  const height = 1240;
   const margin = 72;
   const canvases = [];
   let canvas = document.createElement("canvas");
@@ -4626,7 +4659,7 @@ function buildHistoryPdfCanvases(extinguisher, rows) {
     context.fillRect(0, 0, width, height);
     context.fillStyle = "#202124";
     context.font = "700 38px Arial";
-    context.fillText(`История огнетушителя № ${getExtinguisherNumber(extinguisher) || "без номера"}`, margin, y);
+    context.fillText("История изменений", margin, y);
     y += 56;
     context.font = "500 24px Arial";
     context.fillStyle = "#606368";
@@ -4651,9 +4684,9 @@ function buildHistoryPdfCanvases(extinguisher, rows) {
   rows.forEach((row) => {
     const details = [row.details, row.source].filter(Boolean).join(" · ");
     context.font = "700 25px Arial";
-    const actionLines = wrapCanvasText(context, row.action, width - margin * 2 - 220);
+    const actionLines = wrapCanvasText(context, row.action, width - margin * 2 - 310);
     context.font = "500 22px Arial";
-    const detailLines = wrapCanvasText(context, details, width - margin * 2 - 220);
+    const detailLines = wrapCanvasText(context, details, width - margin * 2 - 310);
     const blockHeight = 42 + actionLines.length * 32 + detailLines.length * 28 + 26;
 
     if (y + blockHeight > height - margin) {
@@ -4669,15 +4702,15 @@ function buildHistoryPdfCanvases(extinguisher, rows) {
     context.font = "700 25px Arial";
     let textY = y + 34;
     actionLines.forEach((line) => {
-      context.fillText(line, margin + 220, textY);
+      context.fillText(line, margin + 310, textY);
       textY += 32;
     });
     context.fillStyle = "#606368";
     context.font = "500 21px Arial";
-    context.fillText(row.actor || "Не указано", margin + 220, textY);
+    context.fillText(row.actor || "Не указано", margin + 310, textY);
     textY += 30;
     detailLines.forEach((line) => {
-      context.fillText(line, margin + 220, textY);
+      context.fillText(line, margin + 310, textY);
       textY += 28;
     });
     y += blockHeight + 18;
@@ -4814,7 +4847,11 @@ function downloadExtinguisherHistoryPdf() {
   }
 
   const title = `Карточка огнетушителя № ${getExtinguisherNumber(extinguisher) || "без номера"}`;
-  const blob = createPdfFromCanvases([buildExtinguisherTableA1Canvas(extinguisher)], {
+  const canvases = [
+    buildExtinguisherTableA1Canvas(extinguisher),
+    ...buildHistoryPdfCanvases(extinguisher, getExtinguisherHistoryRows()),
+  ];
+  const blob = createPdfFromCanvases(canvases, {
     pageWidth: 842,
     pageHeight: 595,
   });
