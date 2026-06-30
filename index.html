@@ -643,6 +643,6 @@
       </section>
     </main>
 
-    <script src="./script.js?v=20260630-history-camera-1"></script>
+    <script src="./script.js?v=20260630-table-a1-1"></script>
   </body>
 </html>

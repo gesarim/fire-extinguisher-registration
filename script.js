@@ -4530,52 +4530,53 @@ function downloadBlob(blob, fileName) {
   URL.revokeObjectURL(url);
 }
 
+function getExtinguisherTableA1Rows(extinguisher) {
+  return [
+    ["1. Номер, присвоенный огнетушителю", getExtinguisherNumber(extinguisher) || "Не указан"],
+    ["2. Дата размещения огнетушителя на объекте защиты", extinguisher.placement_date || extinguisher.placementDate || "Не указана"],
+    ["3. Место установки огнетушителя", [formatExtinguisherPlace(extinguisher), getExtinguisherExactPlace(extinguisher)].filter(Boolean).join(" · ") || "Не указано"],
+    ["4. Тип и марка огнетушителя", getExtinguisherTypeMark(extinguisher) || "Не указаны"],
+    ["5. Завод — изготовитель огнетушителя", extinguisher.manufacturer || "Не указан"],
+    ["6. Заводской номер", extinguisher.factory_number || extinguisher.factoryNumber || "Не указан"],
+    ["7. Дата изготовления огнетушителя", extinguisher.release_date || extinguisher.manufacture_date || extinguisher.releaseDate || extinguisher.manufactureDate || "Не указана"],
+    ["8. Дата очередной перезарядки огнетушителя", extinguisher.next_recharge_date || extinguisher.nextRechargeDate || "Не указана"],
+    ["9. Срок службы огнетушителя", extinguisher.service_life || extinguisher.serviceLife || "Не указан"],
+    ["10. Ответственное лицо и его подпись", extinguisher.responsible_person || extinguisher.responsiblePerson || "Не указано"],
+  ];
+}
+
 function downloadExtinguisherHistoryExcel() {
   const extinguisher = appState.currentExtinguisher;
-  const rows = getExtinguisherHistoryRows();
 
   if (!extinguisher) {
     showSnackbar("Сначала откройте огнетушитель");
     return;
   }
 
-  const title = `История огнетушителя № ${getExtinguisherNumber(extinguisher) || "без номера"}`;
-  const tableRows = rows.length
-    ? rows.map((row) => `
+  const title = `Карточка огнетушителя № ${getExtinguisherNumber(extinguisher) || "без номера"}`;
+  const tableRows = getExtinguisherTableA1Rows(extinguisher)
+    .map(([label, value]) => `
         <tr>
-          <td>${escapeHtml(row.date)}</td>
-          <td>${escapeHtml(row.action)}</td>
-          <td>${escapeHtml(row.actor)}</td>
-          <td>${escapeHtml(row.details)}</td>
-          <td>${escapeHtml(row.source)}</td>
+          <td class="label">${escapeHtml(label)}</td>
+          <td>${escapeHtml(value)}</td>
         </tr>
-      `).join("")
-    : '<tr><td colspan="5">История пока пустая</td></tr>';
+      `).join("");
   const html = `
     <!doctype html>
     <html>
       <head>
         <meta charset="utf-8" />
         <style>
-          body { font-family: Arial, sans-serif; }
-          table { border-collapse: collapse; width: 100%; }
-          th, td { border: 1px solid #999; padding: 8px; vertical-align: top; }
-          th { background: #f2f2f2; }
+          body { font-family: Arial, sans-serif; color: #242424; }
+          h1 { margin: 0 0 18px; color: #38a979; font-size: 18pt; font-weight: 500; }
+          table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+          td { border: 1.5pt solid #42b883; padding: 8px 10px; vertical-align: middle; font-size: 12pt; }
+          td.label { width: 56%; color: #269c6a; font-weight: 600; }
         </style>
       </head>
       <body>
-        <h1>${escapeHtml(title)}</h1>
-        <p>Объект: ${escapeHtml(appState.currentObject?.object?.name || "Не указан")}</p>
+        <h1>Таблица А.1</h1>
         <table>
-          <thead>
-            <tr>
-              <th>Дата</th>
-              <th>Событие</th>
-              <th>Кем</th>
-              <th>Детали</th>
-              <th>Источник</th>
-            </tr>
-          </thead>
           <tbody>${tableRows}</tbody>
         </table>
       </body>
@@ -4686,6 +4687,76 @@ function buildHistoryPdfCanvases(extinguisher, rows) {
   return canvases;
 }
 
+function buildExtinguisherTableA1Canvas(extinguisher) {
+  const width = 1754;
+  const height = 1240;
+  const margin = 58;
+  const tableTop = 132;
+  const labelWidth = 930;
+  const tableWidth = width - margin * 2;
+  const valueWidth = tableWidth - labelWidth;
+  const green = "#42b883";
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  const rows = getExtinguisherTableA1Rows(extinguisher);
+
+  canvas.width = width;
+  canvas.height = height;
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, width, height);
+  context.fillStyle = green;
+  context.font = "500 36px Arial";
+  context.fillText("Таблица А.1", margin, 72);
+
+  const preparedRows = rows.map(([label, value]) => {
+    context.font = "600 25px Arial";
+    const labelLines = wrapCanvasText(context, label, labelWidth - 32);
+    context.font = "500 25px Arial";
+    const valueLines = wrapCanvasText(context, value, valueWidth - 32);
+    return {
+      labelLines,
+      valueLines,
+      height: Math.max(74, Math.max(labelLines.length, valueLines.length) * 31 + 28),
+    };
+  });
+  const naturalHeight = preparedRows.reduce((sum, row) => sum + row.height, 0);
+  const availableHeight = height - tableTop - margin;
+  const scale = naturalHeight > availableHeight ? availableHeight / naturalHeight : 1;
+  let y = tableTop;
+
+  preparedRows.forEach((row) => {
+    const rowHeight = row.height * scale;
+    context.strokeStyle = green;
+    context.lineWidth = 3;
+    context.strokeRect(margin, y, tableWidth, rowHeight);
+    context.beginPath();
+    context.moveTo(margin + labelWidth, y);
+    context.lineTo(margin + labelWidth, y + rowHeight);
+    context.stroke();
+
+    const fontSize = Math.max(20, 25 * scale);
+    const lineHeight = fontSize * 1.24;
+    context.fillStyle = "#269c6a";
+    context.font = `600 ${fontSize}px Arial`;
+    let labelY = y + (rowHeight - row.labelLines.length * lineHeight) / 2 + fontSize;
+    row.labelLines.forEach((line) => {
+      context.fillText(line, margin + 16, labelY);
+      labelY += lineHeight;
+    });
+
+    context.fillStyle = "#242424";
+    context.font = `500 ${fontSize}px Arial`;
+    let valueY = y + (rowHeight - row.valueLines.length * lineHeight) / 2 + fontSize;
+    row.valueLines.forEach((line) => {
+      context.fillText(line, margin + labelWidth + 16, valueY);
+      valueY += lineHeight;
+    });
+    y += rowHeight;
+  });
+
+  return canvas;
+}
+
 function binaryStringToUint8Array(value) {
   const bytes = new Uint8Array(value.length);
 
@@ -4742,9 +4813,11 @@ function downloadExtinguisherHistoryPdf() {
     return;
   }
 
-  const title = `История огнетушителя № ${getExtinguisherNumber(extinguisher) || "без номера"}`;
-  const canvases = buildHistoryPdfCanvases(extinguisher, getExtinguisherHistoryRows());
-  const blob = createPdfFromCanvases(canvases);
+  const title = `Карточка огнетушителя № ${getExtinguisherNumber(extinguisher) || "без номера"}`;
+  const blob = createPdfFromCanvases([buildExtinguisherTableA1Canvas(extinguisher)], {
+    pageWidth: 842,
+    pageHeight: 595,
+  });
   downloadBlob(blob, `${getSafeFileName(title)}.pdf`);
 }
 
