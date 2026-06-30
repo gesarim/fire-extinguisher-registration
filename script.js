@@ -3947,6 +3947,7 @@ function bindInspectionEditButtons(card) {
 
   cancelButton.addEventListener("click", () => {
     resetInspectionFormState(form);
+    updateInspectionRechargeDateVisibility(card);
     const photoContainer = card.querySelector(".photo-upload");
     const savedPhotoFileId = Number(card.dataset.savedPhotoFileId || 0);
 
@@ -4937,6 +4938,24 @@ function renderContractorEmployeeSelect() {
     .join("");
 }
 
+function updateInspectionRechargeDateVisibility(card) {
+  const rechargeSelected = Array.from(card.querySelectorAll("[data-inspection-work-type]:checked"))
+    .some((input) => input.value === "Перезарядка");
+  const field = card.querySelector("[data-inspection-recharge-date-field]");
+  const input = card.querySelector("[data-inspection-recharge-date]");
+
+  if (!field || !input) {
+    return;
+  }
+
+  field.hidden = !rechargeSelected;
+  input.disabled = !rechargeSelected;
+
+  if (!rechargeSelected) {
+    input.value = "";
+  }
+}
+
 function createContractorInspectionCard(data, isOpen = false) {
   const number = data.number || "001";
   const card = document.createElement("article");
@@ -5035,9 +5054,9 @@ function createContractorInspectionCard(data, isOpen = false) {
         <span>Срок следующего планового испытания</span>
         <input type="text" value="${escapeHtml(data.nextTestDate || "")}" placeholder="ДД.ММ.ГГГГ" data-inspection-next-test-date />
       </label>
-      <label class="inspection-field">
+      <label class="inspection-field" data-inspection-recharge-date-field${selectedWorkTypes.has("Перезарядка") ? "" : " hidden"}>
         <span>Дата проведения перезарядки</span>
-        <input type="text" value="${escapeHtml(data.rechargeDate || "")}" placeholder="ДД.ММ.ГГГГ" data-inspection-recharge-date />
+        <input type="text" value="${escapeHtml(data.rechargeDate || "")}" placeholder="ДД.ММ.ГГГГ" data-inspection-recharge-date${selectedWorkTypes.has("Перезарядка") ? "" : " disabled"} />
       </label>
       <label class="inspection-field">
         <span>Марка (концентрация) заряженного ОТВ</span>
@@ -5074,6 +5093,10 @@ function createContractorInspectionCard(data, isOpen = false) {
   bindContractorPhotoUpload(card.querySelector("[data-contractor-photo-upload]"), data);
   bindDecommissionButton(card.querySelector("[data-decommission-extinguisher]"));
   bindInspectionEditButtons(card);
+  card.querySelectorAll("[data-inspection-work-type]").forEach((input) => {
+    input.addEventListener("change", () => updateInspectionRechargeDateVisibility(card));
+  });
+  updateInspectionRechargeDateVisibility(card);
 
   return card;
 }
