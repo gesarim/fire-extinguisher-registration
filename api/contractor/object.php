@@ -35,7 +35,10 @@ $rooms = db()->prepare('SELECT * FROM rooms WHERE object_id = :object_id ORDER B
 $rooms->execute(['object_id' => $objectId]);
 
 $extinguishers = db()->prepare(
-    'SELECT extinguishers.*, rooms.name AS room_name, rooms.floor_name, rooms.fire_zone
+    'SELECT extinguishers.*, rooms.name AS room_name, rooms.floor_name, rooms.fire_zone,
+       (SELECT issues.title FROM issues
+        WHERE issues.extinguisher_id = extinguishers.id AND issues.status = "open"
+        ORDER BY issues.created_at DESC LIMIT 1) AS latest_issue_title
      FROM extinguishers
      LEFT JOIN rooms ON rooms.id = extinguishers.room_id
      WHERE extinguishers.object_id = :object_id

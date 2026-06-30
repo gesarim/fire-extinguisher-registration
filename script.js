@@ -61,6 +61,8 @@ const closeMenuButton = document.querySelector("#closeMenuButton");
 const logoutButton = document.querySelector("#logoutButton");
 const addObjectButton = document.querySelector("#addObjectButton");
 const startInspectionButton = document.querySelector("#startInspectionButton");
+const dashboardObjectsHeadingButton = document.querySelector("#dashboardObjectsHeadingButton");
+const dashboardChecksHeadingButton = document.querySelector("#dashboardChecksHeadingButton");
 const addObjectFromObjectsButton = document.querySelector("#addObjectFromObjectsButton");
 const saveObjectButton = document.querySelector("#saveObjectButton");
 const requestInspectionButton = document.querySelector("#requestInspectionButton");
@@ -548,6 +550,26 @@ function formatDate(value) {
   }
 
   return date.toLocaleDateString("ru-RU");
+}
+
+function formatDateTime(value) {
+  if (!value) {
+    return "Дата не назначена";
+  }
+
+  const date = new Date(String(value).replace(" ", "T"));
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function getInspectionType(inspection) {
@@ -1354,7 +1376,7 @@ function renderObjectSummary() {
       line.className = "extinguisher-line";
       line.dataset.extinguisherId = extinguisher.id || "";
       line.setAttribute("aria-label", `Открыть огнетушитель № ${getExtinguisherNumber(extinguisher) || "без номера"}`);
-      const statusText = getExtinguisherStatusText(extinguisher.status);
+      const statusText = getExtinguisherStatusText(extinguisher);
       const statusClass = ["broken", "decommissioned"].includes(extinguisher.status) ? " is-dark" : "";
       line.innerHTML = `
         <div class="extinguisher-card-main">
@@ -1382,6 +1404,7 @@ function renderObjectSummary() {
     list.className = "summary-list";
     issues.forEach((issue) => {
       const item = document.createElement("li");
+      item.className = `object-issue-item${issue.status === "resolved" ? " is-resolved" : " is-open"}`;
       item.innerHTML = `
         <strong>${escapeHtml(issue.title)}</strong>
         ${issue.comment ? `<small>${escapeHtml(issue.comment)}</small>` : ""}
@@ -1748,6 +1771,38 @@ function openCheckDetail(inspection, returnView = "objectSummary") {
   const hasReportRows = Boolean(items.length);
   downloadReportExcelButton.classList.toggle("is-hidden", !hasReportRows);
   downloadReportPdfButton.classList.toggle("is-hidden", !hasReportRows);
+  showCheckDetail();
+}
+
+function openDashboardChecksOverview() {
+  checkDetailReturnView = "dashboard";
+  appState.currentInspection = null;
+  checkDetailTitle.textContent = "Проверки";
+  checkDetailList.innerHTML = "";
+  downloadReportExcelButton.classList.add("is-hidden");
+  downloadReportPdfButton.classList.add("is-hidden");
+
+  const checks = appState.dashboard.checks || [];
+  if (!checks.length) {
+    checkDetailList.append(createEmptyState("Проверок пока нет", "Когда подрядчик завершит проверку, она появится здесь."));
+  } else {
+    checks.forEach((check) => {
+      const row = document.createElement("button");
+      const inProgress = isInspectionInProgress(check);
+      row.type = "button";
+      row.className = `check-row${inProgress ? " is-in-progress" : ""}`;
+      row.disabled = inProgress;
+      row.innerHTML = `
+        <span>${escapeHtml(getInspectionTitle(check))} · ${escapeHtml(check.object_name || "Объект")} · ${escapeHtml(getInspectionDisplayDate(check))}</span>
+        <span class="check-status${inProgress ? " is-progress" : " is-ok"}">${escapeHtml(getInspectionStatusText(check))}</span>
+      `;
+      if (!inProgress) {
+        row.addEventListener("click", () => openCheckDetail(check, "dashboard"));
+      }
+      checkDetailList.append(row);
+    });
+  }
+
   showCheckDetail();
 }
 
@@ -3263,6 +3318,14 @@ startInspectionButton.addEventListener("click", () => {
   showContractorObjectSelect();
 });
 
+dashboardObjectsHeadingButton.addEventListener("click", () => {
+  showObjects();
+});
+
+dashboardChecksHeadingButton.addEventListener("click", () => {
+  openDashboardChecksOverview();
+});
+
 addObjectFromObjectsButton.addEventListener("click", () => {
   roomCount = 0;
   roomsList.innerHTML = "";
@@ -3777,10 +3840,23 @@ function createPhotoItem({ name, url }) {
 }
 
 function bindPhotoUpload(container, button, initialFileId = 0, initialName = "") {
+  button.textContent = "Выбрать из галереи";
+
+  const actions = document.createElement("div");
+  actions.className = "photo-upload-actions";
+  container.insertBefore(actions, button);
+  actions.append(button);
+
+  const cameraButton = document.createElement("button");
+  cameraButton.type = "button";
+  cameraButton.className = "upload-button";
+  cameraButton.textContent = "Сделать фото";
+  actions.append(cameraButton);
+
   if (!container.querySelector(".upload-hint")) {
     const hint = document.createElement("small");
     hint.className = "upload-hint";
-    hint.textContent = "JPG, PNG или WEBP · до 10 МБ";
+    hint.textContent = "JPG, PNG или WEBP · до 10 МБ · галерея или камера";
     container.append(hint);
   }
 
@@ -3792,6 +3868,16 @@ function bindPhotoUpload(container, button, initialFileId = 0, initialName = "")
   input.setAttribute("aria-hidden", "true");
   input.tabIndex = -1;
   container.append(input);
+
+  const cameraInput = document.createElement("input");
+  cameraInput.type = "file";
+  cameraInput.accept = "image/*";
+  cameraInput.setAttribute("capture", "environment");
+  cameraInput.className = "file-input-hidden";
+  cameraInput.hidden = true;
+  cameraInput.setAttribute("aria-hidden", "true");
+  cameraInput.tabIndex = -1;
+  container.append(cameraInput);
 
   const render = ({ file = null, fileId = 0, name = "", url = "" }) => {
     const previous = container.querySelector(".photo-item");
@@ -3806,7 +3892,7 @@ function bindPhotoUpload(container, button, initialFileId = 0, initialName = "")
     container.dataset.fileId = fileId ? String(fileId) : "";
 
     if (!file && !fileId) {
-      button.classList.remove("is-hidden");
+      actions.classList.remove("is-hidden");
       return;
     }
 
@@ -3820,22 +3906,28 @@ function bindPhotoUpload(container, button, initialFileId = 0, initialName = "")
     item.querySelector("[data-replace-photo]").addEventListener("click", () => input.click());
     item.querySelector("[data-remove-photo]").addEventListener("click", () => {
       input.value = "";
+      cameraInput.value = "";
       render({});
     });
     container.prepend(item);
-    button.classList.add("is-hidden");
+    actions.classList.add("is-hidden");
   };
 
   button.addEventListener("click", () => input.click());
-  input.addEventListener("change", () => {
+  cameraButton.addEventListener("click", () => cameraInput.click());
+
+  const handlePhotoChange = (sourceInput) => {
     try {
-      const file = validateLocalFile(input.files?.[0], "photo");
+      const file = validateLocalFile(sourceInput.files?.[0], "photo");
       render({ file, name: file.name });
     } catch (error) {
-      input.value = "";
+      sourceInput.value = "";
       showSnackbar(error.message);
     }
-  });
+  };
+
+  input.addEventListener("change", () => handlePhotoChange(input));
+  cameraInput.addEventListener("change", () => handlePhotoChange(cameraInput));
 
   if (initialFileId) {
     render({ fileId: initialFileId, name: initialName || "Фото огнетушителя" });
@@ -4094,7 +4186,20 @@ function formatInspectionItemFullPlace(item, separator = "\n") {
     .join(separator);
 }
 
-function getExtinguisherStatusText(status) {
+function getExtinguisherIssueType(extinguisher) {
+  const title = String(extinguisher?.latest_issue_title || "").trim();
+  return title.replace(/^Огнетушитель\s+№\s*[^:]+:\s*/ui, "");
+}
+
+function getExtinguisherStatusText(extinguisherOrStatus) {
+  const extinguisher = typeof extinguisherOrStatus === "object" ? extinguisherOrStatus : null;
+  const status = extinguisher?.status || extinguisherOrStatus;
+  const issueType = extinguisher ? getExtinguisherIssueType(extinguisher) : "";
+
+  if (issueType) {
+    return issueType;
+  }
+
   if (status === "broken") {
     return "Неисправен";
   }
@@ -4244,6 +4349,26 @@ function getExtinguisherHistory(extinguisher) {
   (source.issues || [])
     .filter((issue) => String(issue.extinguisher_id || "") === String(extinguisher.id || ""))
     .forEach((issue) => {
+      const problemText = String(issue.title || "")
+        .replace(/^Огнетушитель\s+№\s*[^:]+:\s*/ui, "")
+        .trim()
+        .toLocaleLowerCase("ru-RU");
+      const issueTime = eventTimestamp(issue.created_at);
+      const duplicatesEvent = history.some((event) => {
+        if (!["issue", "replacement_required", "decommissioned"].includes(event.type)) {
+          return false;
+        }
+
+        const eventText = `${event.title || ""} ${event.details || ""}`.toLocaleLowerCase("ru-RU");
+        const eventTime = eventTimestamp(event.at);
+        return (problemText && eventText.includes(problemText))
+          || (issueTime && eventTime && Math.abs(issueTime - eventTime) <= 10000);
+      });
+
+      if (duplicatesEvent) {
+        return;
+      }
+
       history.push({
         type: "issue",
         title: "Зафиксирована неисправность",
@@ -4291,7 +4416,7 @@ function getExtinguisherHistoryRows() {
   }
 
   return getExtinguisherHistory(extinguisher).map((event) => ({
-    date: formatDate(event.at),
+    date: formatDateTime(event.at),
     action: event.title,
     actor: formatHistoryActor(event),
     details: event.details || "",
@@ -4307,12 +4432,12 @@ function renderExtinguisherDetail(extinguisher) {
   const replacementRequired = getLifecycleEvent(history, (event) => event.type === "replacement_required" || /замен/ui.test(event.title));
   const place = formatExtinguisherPlace(extinguisher) || "Помещение не указано";
   const exactPlace = getExtinguisherExactPlace(extinguisher);
-  const statusText = getExtinguisherStatusText(extinguisher.status);
+  const statusText = getExtinguisherStatusText(extinguisher);
   const statusClass = ["broken", "decommissioned"].includes(extinguisher.status) ? " is-dark" : "";
   const historyMarkup = history.length
     ? history.map((event) => `
         <li class="extinguisher-history-item">
-          <span class="history-date">${escapeHtml(formatDate(event.at))}</span>
+          <span class="history-date">${escapeHtml(formatDateTime(event.at))}</span>
           <strong>${escapeHtml(event.title)}</strong>
           <small>${escapeHtml(formatHistoryActor(event))}</small>
           ${event.details ? `<p>${escapeHtml(event.details)}</p>` : ""}
@@ -4662,7 +4787,7 @@ function getObjectReportSections() {
         item.factory_number || "",
         getExtinguisherManufactureDate(item),
         item.next_recharge_date || "",
-        getExtinguisherStatusText(item.status),
+        getExtinguisherStatusText(item),
         item.responsible_person || "",
       ]),
     },

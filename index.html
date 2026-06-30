@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Регистрация | Учет огнетушителей</title>
-    <link rel="stylesheet" href="./styles.css?v=20260630-problem-card-1" />
+    <link rel="stylesheet" href="./styles.css?v=20260630-history-camera-1" />
   </head>
   <body>
     <main class="app-shell" aria-labelledby="page-title">
@@ -135,18 +135,18 @@
 
           <div class="dashboard-content" data-organization-dashboard>
             <section class="dashboard-objects-section" aria-labelledby="dashboardTitle">
-              <div class="section-title-row">
+              <button type="button" class="section-title-row section-title-button" id="dashboardObjectsHeadingButton">
                 <h2 id="dashboardTitle">Объекты</h2>
                 <span aria-hidden="true">›</span>
-              </div>
+              </button>
               <div class="dashboard-object-list"></div>
             </section>
 
             <section class="checks-section" aria-labelledby="checksTitle">
-              <div class="section-title-row">
+              <button type="button" class="section-title-row section-title-button" id="dashboardChecksHeadingButton">
                 <h2 id="checksTitle">Последние проверки</h2>
                 <span aria-hidden="true">›</span>
-              </div>
+              </button>
               <div class="dashboard-check-list"></div>
             </section>
 
@@ -182,7 +182,7 @@
           </div>
 
           <button type="button" class="primary-button add-project-button" id="addObjectButton" data-organization-dashboard-action>Добавить объект</button>
-          <button type="button" class="primary-button add-project-button is-hidden" id="startInspectionButton" data-contractor-dashboard-action>Начать проверку</button>
+          <button type="button" class="primary-button add-project-button is-hidden" id="startInspectionButton" data-contractor-dashboard-action>Показать все объекты</button>
         </section>
 
         <section class="summary-screen" id="summaryScreen" aria-labelledby="summaryTitle">
@@ -643,6 +643,6 @@
       </section>
     </main>
 
-    <script src="./script.js?v=20260630-no-print-1"></script>
+    <script src="./script.js?v=20260630-history-camera-1"></script>
   </body>
 </html>
