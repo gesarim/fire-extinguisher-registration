@@ -643,6 +643,6 @@
       </section>
     </main>
 
-    <script src="./script.js?v=20260630-recharge-date-1"></script>
+    <script src="./script.js?v=20260630-otv-order-1"></script>
   </body>
 </html>

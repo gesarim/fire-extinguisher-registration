@@ -4682,7 +4682,7 @@ const INSPECTION_REPORT_COLUMNS = [
   "Результаты осмотра и испытания на прочность",
   "Срок следующего планового испытания",
   "Дата проведения перезарядки огнетушителя",
-  "Марка (концентрация) заряженного ОТВ",
+  "Концентрация заряженного ОТВ",
   "Результат осмотра после перезарядки",
   "Дата следующей плановой перезарядки",
   "Должность, фамилия, инициалы и подпись ответственного лица",
@@ -4999,6 +4999,10 @@ function createContractorInspectionCard(data, isOpen = false) {
         <input type="text" value="${escapeHtml(data.name || "")}" data-inspection-name />
       </label>
       <label class="inspection-field">
+        <span>Концентрация заряженного ОТВ</span>
+        <input type="text" value="${escapeHtml(data.otvMark || "")}" placeholder="Например: порошок ABC" data-inspection-otv-mark />
+      </label>
+      <label class="inspection-field">
         <span>Завод — изготовитель огнетушителя</span>
         <input type="text" value="${escapeHtml(data.manufacturer || "")}" data-inspection-manufacturer />
       </label>
@@ -5057,10 +5061,6 @@ function createContractorInspectionCard(data, isOpen = false) {
       <label class="inspection-field" data-inspection-recharge-date-field${selectedWorkTypes.has("Перезарядка") ? "" : " hidden"}>
         <span>Дата проведения перезарядки</span>
         <input type="text" value="${escapeHtml(data.rechargeDate || "")}" placeholder="ДД.ММ.ГГГГ" data-inspection-recharge-date${selectedWorkTypes.has("Перезарядка") ? "" : " disabled"} />
-      </label>
-      <label class="inspection-field">
-        <span>Марка (концентрация) заряженного ОТВ</span>
-        <input type="text" value="${escapeHtml(data.otvMark || "")}" placeholder="Например: порошок ABC" data-inspection-otv-mark />
       </label>
       <label class="inspection-field">
         <span>Результат осмотра после перезарядки</span>
