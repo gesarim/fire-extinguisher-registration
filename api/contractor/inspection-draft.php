@@ -85,6 +85,7 @@ function normalize_draft_items($items)
             'result' => trim((string)(isset($item['result']) ? $item['result'] : '')) ?: 'Годный к эксплуатации',
             'comment' => trim((string)(isset($item['comment']) ? $item['comment'] : '')),
             'photoFileId' => (int)(isset($item['photoFileId']) ? $item['photoFileId'] : 0),
+            'checked' => !empty($item['checked']),
             'decommissioned' => !empty($item['decommissioned']),
         ];
     }

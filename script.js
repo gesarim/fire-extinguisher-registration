@@ -3917,6 +3917,7 @@ function applyContractorInspectionDraft(objectId) {
     checkType: item.checkType,
     workTypes: getInspectionWorkTypes(item),
     result: item.result,
+    checked: Boolean(item.checked),
     decommissioned: item.decommissioned,
   }));
 }
@@ -3927,12 +3928,16 @@ function bindInspectionEditButtons(card) {
   const cancelButton = card.querySelector("[data-cancel-inspection-changes]");
 
   saveButton.addEventListener("click", async () => {
+    const previousChecked = card.dataset.checked === "true";
+    card.dataset.checked = "true";
+    updateInspectionCardCheckedState(card);
     saveButton.disabled = true;
 
     try {
       await saveCurrentContractorInspectionDraft();
       saveInspectionFormState(form);
       updateInspectionCardTitle(card);
+      card.dataset.savedChecked = "true";
       card.dataset.savedPhotoFileId = card.dataset.photoFileId || "";
       const toggle = card.querySelector(".inspection-card-toggle");
       card.classList.remove("is-open");
@@ -3940,6 +3945,8 @@ function bindInspectionEditButtons(card) {
       form.hidden = true;
       showSnackbar("Изменения сохранены");
     } catch (error) {
+      card.dataset.checked = String(previousChecked);
+      updateInspectionCardCheckedState(card);
       showSnackbar(error.message);
     } finally {
       saveButton.disabled = false;
@@ -3947,6 +3954,8 @@ function bindInspectionEditButtons(card) {
   });
 
   cancelButton.addEventListener("click", () => {
+    card.dataset.checked = card.dataset.savedChecked || "false";
+    updateInspectionCardCheckedState(card);
     resetInspectionFormState(form);
     updateInspectionRechargeDateVisibility(card);
     updateInspectionCardTitle(card);
@@ -4932,6 +4941,7 @@ function mapExtinguisherToInspection(extinguisher) {
     }),
     workTypes: getInspectionWorkTypes(extinguisher),
     result: extinguisher.result || getInspectionResultByStatus(extinguisher.status),
+    checked: Boolean(extinguisher.checked),
     decommissioned: extinguisher.status === "decommissioned",
   };
 }
@@ -4977,6 +4987,16 @@ function updateInspectionCardTitle(card) {
   }
 }
 
+function updateInspectionCardCheckedState(card) {
+  const isChecked = card.dataset.checked === "true";
+  const marker = card.querySelector("[data-inspection-card-check]");
+  card.classList.toggle("is-checked", isChecked);
+
+  if (marker) {
+    marker.hidden = !isChecked;
+  }
+}
+
 function createContractorInspectionCard(data, isOpen = false) {
   const number = data.number || "001";
   const card = document.createElement("article");
@@ -4987,6 +5007,8 @@ function createContractorInspectionCard(data, isOpen = false) {
   card.dataset.photoFileId = data.photoFileId || data.photo_file_id || "";
   card.dataset.savedPhotoFileId = card.dataset.photoFileId;
   card.dataset.decommissioned = data.decommissioned ? "true" : "false";
+  card.dataset.checked = data.checked ? "true" : "false";
+  card.dataset.savedChecked = card.dataset.checked;
   const selectedWorkTypes = new Set(getInspectionWorkTypes(data));
   const workTypesMarkup = INSPECTION_WORK_TYPES.map((workType) => `
     <label class="inspection-work-option">
@@ -4997,7 +5019,12 @@ function createContractorInspectionCard(data, isOpen = false) {
   card.innerHTML = `
     <button type="button" class="inspection-card-toggle" aria-expanded="${isOpen ? "true" : "false"}">
       <span data-inspection-card-title>${escapeHtml(formatExtinguisherTitle({ number: data.assignedNumber || number, typeMark: data.typeMark || data.name || "" }))}</span>
-      <span class="inspection-card-arrow" aria-hidden="true">›</span>
+      <span class="inspection-card-meta">
+        <span class="inspection-card-check" data-inspection-card-check aria-label="Проверено"${data.checked ? "" : " hidden"}>
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5 8.3 14 15 6.5" /></svg>
+        </span>
+        <span class="inspection-card-arrow" aria-hidden="true">›</span>
+      </span>
     </button>
     <div class="extinguisher-form inspection-form" ${isOpen ? "" : "hidden"}>
       <label class="inspection-field inspection-field-accent">
@@ -5123,6 +5150,7 @@ function createContractorInspectionCard(data, isOpen = false) {
   });
   updateInspectionRechargeDateVisibility(card);
   updateInspectionCardTitle(card);
+  updateInspectionCardCheckedState(card);
 
   return card;
 }
@@ -5225,6 +5253,7 @@ function collectContractorInspectionItems() {
       checkType: card.querySelector("[data-inspection-check-type]")?.value || inspectionTypeSelect.value,
       workTypes: Array.from(card.querySelectorAll("[data-inspection-work-type]:checked")).map((input) => input.value),
       result: card.querySelector("[data-inspection-result]")?.value || "Годный к эксплуатации",
+      checked: card.dataset.checked === "true",
       decommissioned: card.dataset.decommissioned === "true",
     };
   });

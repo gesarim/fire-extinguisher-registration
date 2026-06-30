@@ -2340,6 +2340,38 @@ button:focus-visible {
   line-height: 1.35;
 }
 
+.inspection-card-meta {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inspection-card-check {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+}
+
+.inspection-card-check[hidden] {
+  display: none;
+}
+
+.inspection-card-check svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .inspection-card-arrow {
   color: var(--muted);
   font-size: 22px;
