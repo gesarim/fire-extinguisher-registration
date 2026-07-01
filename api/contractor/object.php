@@ -51,7 +51,7 @@ $issues = db()->prepare(
     'SELECT issues.*, extinguishers.number AS extinguisher_number
      FROM issues
      LEFT JOIN extinguishers ON extinguishers.id = issues.extinguisher_id
-     WHERE issues.organization_id = :organization_id AND issues.object_id = :object_id
+     WHERE issues.organization_id = :organization_id AND issues.object_id = :object_id AND issues.status = "open"
      ORDER BY issues.created_at DESC'
 );
 $issues->execute([

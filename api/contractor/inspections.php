@@ -170,6 +170,14 @@ try {
         'INSERT INTO issues (organization_id, object_id, extinguisher_id, title, comment, photo_file_id)
          VALUES (:organization_id, :object_id, :extinguisher_id, :title, :comment, :photo_file_id)'
     );
+    $resolveIssues = $pdo->prepare(
+        'UPDATE issues
+         SET status = "resolved"
+         WHERE organization_id = :organization_id
+           AND object_id = :object_id
+           AND extinguisher_id = :extinguisher_id
+           AND status = "open"'
+    );
     $insertEvent = $pdo->prepare(
         'INSERT INTO extinguisher_events (
             organization_id, object_id, extinguisher_id, event_type, title, actor_name, actor_role, event_at, details
@@ -210,6 +218,11 @@ try {
         $decommissioned = !empty($item['decommissioned']);
         $photoFileId = (int)(isset($item['photoFileId']) ? $item['photoFileId'] : 0);
         $status = contractor_result_status($result, $decommissioned);
+        $didRecharge = in_array('Перезарядка', $workTypes, true);
+
+        if ($didRecharge && !$decommissioned && !preg_match('/замен|ремонт/ui', $result)) {
+            $status = 'ok';
+        }
 
         require_scoped_file($photoFileId, $object['organization_id'], $objectId, true);
 
@@ -334,6 +347,14 @@ try {
             'comment' => $comment !== '' ? $comment : null,
             'photo_file_id' => $photoFileId > 0 ? $photoFileId : null,
         ]);
+
+        if ($didRecharge && $status === 'ok' && $extinguisherId > 0) {
+            $resolveIssues->execute([
+                'organization_id' => $object['organization_id'],
+                'object_id' => $objectId,
+                'extinguisher_id' => $extinguisherId,
+            ]);
+        }
 
         if ($status !== 'ok') {
             $issueTitle = $decommissioned
